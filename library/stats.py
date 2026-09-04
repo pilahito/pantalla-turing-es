@@ -70,7 +70,15 @@ elif HW_SENSORS == "STATIC":
     import library.sensors.sensors_stub_static as sensors
 elif HW_SENSORS == "AUTO":
     if platform.system() == 'Windows':
-        import library.sensors.sensors_librehardwaremonitor as sensors
+        import ctypes
+        if ctypes.windll.shell32.IsUserAnAdmin() != 0:
+            import library.sensors.sensors_librehardwaremonitor as sensors
+        else:
+            logger.warning(
+                "Sin administrador: sensores Python (la temp. de CPU puede faltar). "
+                "Usa Turing-Admin.exe para stats tipo Administrador de tareas."
+            )
+            import library.sensors.sensors_python as sensors
     else:
         import library.sensors.sensors_python as sensors
 else:

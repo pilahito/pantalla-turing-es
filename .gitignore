@@ -139,6 +139,7 @@ dmypy.json
 # Simulated display capture
 screencap.png
 tmp
+dist-lanzadores/
 
 version.txt
 external/LibreHardwareMonitor/LibreHardwareMonitorLib.sys
