@@ -204,6 +204,35 @@ STATS:
           BACKGROUND_IMAGE: background.png
           ALIGN: right
           ANCHOR: rt
+  WEATHER:
+    INTERVAL: 300
+    TEMPERATURE:
+      TEXT:
+        SHOW: True
+        SHOW_UNIT: False
+        X: 168
+        Y: 10
+        WIDTH: 58
+        HEIGHT: 20
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 14
+        FONT_COLOR: 40, 220, 160
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+    WEATHER_DESCRIPTION:
+      TEXT:
+        SHOW: True
+        X: 226
+        Y: 12
+        WIDTH: 64
+        HEIGHT: 16
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 11
+        FONT_COLOR: 160, 180, 200
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
   DATE:
     INTERVAL: 1
     DAY:

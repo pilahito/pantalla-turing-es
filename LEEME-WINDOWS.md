@@ -22,6 +22,13 @@ El programa cerrado UsbPCMonitor se eliminó: bloqueaba COM3 y no tiene comunida
 | `Turing-Circuito.exe` | CircuitoES |
 | `Turing-Bosque.exe` | BosqueES |
 | `Turing-Tareas.exe` | AdminES (administrador de tareas) |
+| `Turing-Clasico.exe` | 3.5inchTheme2 horizontal |
+| `Turing-Azul.exe` | SimpleBlue horizontal |
+| `Turing-Naranja.exe` | SimpleOrange horizontal |
+| `Turing-Verde.exe` | SimpleGreen horizontal |
+| `Turing-Fallout.exe` | Fallout horizontal |
+| `Turing-CyberpunkH.exe` | Cyberpunk horizontal |
+| `Turing-TermH.exe` | Terminal original horizontal |
 | `Turing-Cyberdeck.exe` | Cyberdeck |
 | `Turing-6Celdas.exe` | Landscape6Grid |
 | `Turing-Tierra.exe` | LandscapeEarth |

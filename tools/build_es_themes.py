@@ -433,6 +433,35 @@ STATS:
           BACKGROUND_IMAGE: background.png
           ALIGN: right
           ANCHOR: rt
+  WEATHER:
+    INTERVAL: 300
+    TEMPERATURE:
+      TEXT:
+        SHOW: True
+        SHOW_UNIT: False
+        X: 168
+        Y: 10
+        WIDTH: 58
+        HEIGHT: 20
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 14
+        FONT_COLOR: {rgb(b)}
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+    WEATHER_DESCRIPTION:
+      TEXT:
+        SHOW: True
+        X: 226
+        Y: 12
+        WIDTH: 64
+        HEIGHT: 16
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 11
+        FONT_COLOR: {rgb(m)}
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
   DATE:
     INTERVAL: 1
     DAY:
@@ -512,6 +541,7 @@ def hud_horizon(bg, title, a, b, white, mute, cpu_lbl="CPU", gpu_lbl="GPU"):
     accent_bar(d, 174, 218, 62, a)
     accent_bar(d, 332, 218, 48, b)
     text(d, (16, 12), title, F_TITLE(16), a)
+    text(d, (168, 8), "TIEMPO", F_MONO(8), mute)
     text(d, (16, 50), cpu_lbl, F_SANS(13), white)
     text(d, (254, 50), gpu_lbl, F_SANS(13), white)
     text(d, (16, 226), "RAM", F_SANS(13), white)

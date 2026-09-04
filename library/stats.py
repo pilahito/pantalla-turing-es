@@ -889,25 +889,42 @@ class Weather:
                 lang = config.CONFIG_DATA['config'].get('WEATHER_LANGUAGE', "en")
                 deg = WEATHER_UNITS.get(units, '°?')
                 if api_key:
-                    url = f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,daily,alerts&appid={api_key}&units={units}&lang={lang}'
+                    urls = [
+                        f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,daily,alerts&appid={api_key}&units={units}&lang={lang}',
+                        f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units={units}&lang={lang}',
+                    ]
+                    desc = None
                     try:
-                        response = requests.get(url)
-                        if response.status_code == 200:
+                        for url in urls:
+                            response = requests.get(url, timeout=8)
+                            if response.status_code != 200:
+                                logger.warning("OpenWeather HTTP %s (%s)", response.status_code, url.split("?")[0])
+                                desc = response.json().get("message", "tiempo no disponible")
+                                continue
                             data = response.json()
-                            temp = f"{data['current']['temp']:.1f}{deg}"
-                            feel = f"({data['current']['feels_like']:.1f}{deg})"
-                            desc = data['current']['weather'][0]['description'].capitalize()
-                            humidity = f"{data['current']['humidity']:.0f}%"
+                            cur = data.get("current") or data.get("main") or {}
+                            wlist = data.get("weather") or (data.get("current") or {}).get("weather") or []
+                            tval = cur.get("temp")
+                            fval = cur.get("feels_like")
+                            hval = cur.get("humidity")
+                            if tval is None:
+                                continue
+                            temp = f"{float(tval):.0f}{deg}"
+                            feel = f"({float(fval):.0f}{deg})" if fval is not None else ""
+                            humidity = f"{float(hval):.0f}%" if hval is not None else ""
+                            if wlist:
+                                desc = str(wlist[0].get("description", "")).capitalize()
+                            else:
+                                desc = ""
                             now = datetime.datetime.now()
-                            time = f"@{now.hour:02d}:{now.minute:02d}"
-                        else:
-                            logger.error(f"Error {response.status_code} fetching OpenWeatherMap API:")
-                            # logger.error(f"Response content: {response.content}")
-                            # logger.error(response.text)
-                            desc = response.json().get('message')
+                            time = f"{now.hour:02d}:{now.minute:02d}"
+                            logger.info("Tiempo Conil: %s %s", temp, desc)
+                            break
+                        if temp is None and not desc:
+                            desc = "Sin datos de tiempo"
                     except Exception as e:
-                        logger.error(f"Error fetching OpenWeatherMap API: {str(e)}")
-                        desc = "Error fetching OpenWeatherMap API"
+                        logger.error("Error fetching OpenWeatherMap API: %s", e)
+                        desc = "Tiempo no disponible"
                 else:
                     logger.warning("No OpenWeatherMap API key provided in config.yaml")
                     desc = "No OpenWeatherMap API key"

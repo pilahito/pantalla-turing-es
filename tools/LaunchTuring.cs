@@ -2,59 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
-using System.Text.RegularExpressions;
 
 internal static class Program
 {
     private const string Root = @"E:\turing-smart-screen-python";
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int MessageBox(IntPtr hWnd, string text, string caption, uint type);
 
     private static bool IsAdmin()
     {
         WindowsIdentity id = WindowsIdentity.GetCurrent();
         WindowsPrincipal p = new WindowsPrincipal(id);
         return p.IsInRole(WindowsBuiltInRole.Administrator);
-    }
-
-    private static void KillByName(string name)
-    {
-        try
-        {
-            Process[] list = Process.GetProcessesByName(name);
-            for (int i = 0; i < list.Length; i++)
-            {
-                try { list[i].Kill(); } catch { }
-            }
-        }
-        catch { }
-    }
-
-    private static void KillPythonMain()
-    {
-        string[] names = new string[] { "python", "pythonw" };
-        for (int n = 0; n < names.Length; n++)
-        {
-            Process[] list = Process.GetProcessesByName(names[n]);
-            for (int i = 0; i < list.Length; i++)
-            {
-                try
-                {
-                    string fn = list[i].MainModule.FileName;
-                    if (fn != null && fn.IndexOf("turing-smart-screen-python", StringComparison.OrdinalIgnoreCase) >= 0)
-                        list[i].Kill();
-                }
-                catch { }
-            }
-        }
-    }
-
-    private static void SetTheme(string theme)
-    {
-        string cfg = Path.Combine(Root, "config.yaml");
-        string text = File.ReadAllText(cfg);
-        text = Regex.Replace(text, @"(?m)^(\s*THEME:\s*).+$", "${1}" + theme);
-        text = Regex.Replace(text, @"(?m)^(\s*HW_SENSORS:\s*).+$", "${1}AUTO");
-        File.WriteAllText(cfg, text);
     }
 
     [STAThread]
@@ -90,6 +52,13 @@ internal static class Program
         map["Turing-Circuito"] = "CircuitoES";
         map["Turing-Bosque"] = "BosqueES";
         map["Turing-Tareas"] = "AdminES";
+        map["Turing-Clasico"] = "3.5inchTheme2_H";
+        map["Turing-Azul"] = "SimpleBlue_H";
+        map["Turing-Naranja"] = "SimpleOrange_H";
+        map["Turing-Verde"] = "SimpleGreen_H";
+        map["Turing-CyberpunkH"] = "Cyberpunk_H";
+        map["Turing-Fallout"] = "Fallout_H";
+        map["Turing-TermH"] = "Terminal_H";
 
         string theme = "";
         if (args != null && args.Length > 0)
@@ -97,7 +66,10 @@ internal static class Program
         else if (map.ContainsKey(exe))
             theme = map[exe];
 
-        if (!IsAdmin())
+        bool wantAdmin = exe.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0
+            || exe.IndexOf("Tareas", StringComparison.OrdinalIgnoreCase) >= 0;
+
+        if (wantAdmin && !IsAdmin())
         {
             ProcessStartInfo uac = new ProcessStartInfo();
             uac.FileName = Process.GetCurrentProcess().MainModule.FileName;
@@ -110,22 +82,30 @@ internal static class Program
             return;
         }
 
-        KillByName("UsbPCMonitor");
-        KillPythonMain();
-
-        if (!string.IsNullOrEmpty(theme))
-            SetTheme(theme);
-
-        string pyw = Path.Combine(Root, @"venv\Scripts\pythonw.exe");
-        if (!File.Exists(pyw))
-            pyw = Path.Combine(Root, @"venv\Scripts\python.exe");
+        string py = Path.Combine(Root, @"venv\Scripts\pythonw.exe");
+        if (!File.Exists(py))
+            py = Path.Combine(Root, @"venv\Scripts\python.exe");
+        if (!File.Exists(py))
+        {
+            MessageBox(IntPtr.Zero, "No hay Python en venv.\\nEjecuta Instalar.ps1", "Pantalla Turing", 0x10);
+            return;
+        }
 
         ProcessStartInfo run = new ProcessStartInfo();
-        run.FileName = pyw;
-        run.Arguments = "main.py";
+        run.FileName = py;
+        run.Arguments = string.IsNullOrEmpty(theme)
+            ? "tools\\lanzar.py"
+            : "tools\\lanzar.py \"" + theme.Replace("\"", "") + "\"";
         run.WorkingDirectory = Root;
         run.UseShellExecute = false;
         run.CreateNoWindow = true;
-        Process.Start(run);
+        try
+        {
+            Process.Start(run);
+        }
+        catch (Exception ex)
+        {
+            MessageBox(IntPtr.Zero, ex.Message, "Pantalla Turing", 0x10);
+        }
     }
 }
