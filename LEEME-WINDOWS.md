@@ -13,6 +13,15 @@ El programa cerrado UsbPCMonitor se eliminó: bloqueaba COM3 y no tiene comunida
 | `Turing-Horizonte.exe` | HorizonES (español) |
 | `Turing-NocheNeon.exe` | NocheNeon (español) |
 | `Turing-Terminal.exe` | TerminalES (español) |
+| `Turing-Conil.exe` | ConilES (playa) |
+| `Turing-Ember.exe` | EmberES (lava) |
+| `Turing-Hielo.exe` | HieloES |
+| `Turing-Atardecer.exe` | AtardecerES |
+| `Turing-Violeta.exe` | VioletaES |
+| `Turing-Minimal.exe` | MinimalES |
+| `Turing-Circuito.exe` | CircuitoES |
+| `Turing-Bosque.exe` | BosqueES |
+| `Turing-Tareas.exe` | AdminES (administrador de tareas) |
 | `Turing-Cyberdeck.exe` | Cyberdeck |
 | `Turing-6Celdas.exe` | Landscape6Grid |
 | `Turing-Tierra.exe` | LandscapeEarth |
@@ -28,7 +37,7 @@ Cierra cualquier UsbPCMonitor si reaparece.
 
 ## Temas horizontales 3.5" en español
 
-HorizonES, NocheNeon y TerminalES tienen textos en español.
+Temas ES propios: HorizonES, NocheNeon, TerminalES, ConilES, EmberES, HieloES, AtardecerES, VioletaES, MinimalES, CircuitoES, BosqueES, AdminES.
 El resto de skins **landscape 480×320** ya cargan en la 3.5" (antes fallaban por `DISPLAY_SIZE: "3.5"` vs `3.5"`).
 
 Si la imagen sale al revés: en `config.yaml` pon `DISPLAY_REVERSE: true`.

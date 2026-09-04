@@ -81,6 +81,15 @@ internal static class Program
         map["Turing-OnePiece"] = "OnePiece1";
         map["Turing-Reloj"] = "BigClock";
         map["Turing-Servidor"] = "LandscapeModernDevice35";
+        map["Turing-Conil"] = "ConilES";
+        map["Turing-Ember"] = "EmberES";
+        map["Turing-Hielo"] = "HieloES";
+        map["Turing-Atardecer"] = "AtardecerES";
+        map["Turing-Violeta"] = "VioletaES";
+        map["Turing-Minimal"] = "MinimalES";
+        map["Turing-Circuito"] = "CircuitoES";
+        map["Turing-Bosque"] = "BosqueES";
+        map["Turing-Tareas"] = "AdminES";
 
         string theme = "";
         if (args != null && args.Length > 0)

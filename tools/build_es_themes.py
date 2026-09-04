@@ -15,8 +15,8 @@ def font(rel: str, size: int) -> ImageFont.FreeTypeFont:
 
 
 F_TITLE = lambda s: font("geforce/GeForce-Bold.ttf", s)
-F_MONO = lambda s: font("jetbrains-mono/JetBrainsMono-Bold.ttf", s)
-F_SANS = lambda s: font("roboto/Roboto-Bold.ttf", s)
+F_MONO = lambda s: font("roboto-mono/RobotoMono-Bold.ttf", s)
+F_SANS = lambda s: font("roboto-mono/RobotoMono-Bold.ttf", s)
 F_TERM = lambda s: font("generale-mono/GeneraleMonoA.ttf", s)
 
 
@@ -218,8 +218,389 @@ def terminal():
     save_theme("TerminalES", bg, preview)
 
 
+def rgb(c):
+    return f"{c[0]}, {c[1]}, {c[2]}"
+
+
+def write_horizon_yaml(name: str, accent, accent2, white, mute, led=None):
+    """Misma plantilla 480x320 que HorizonES (stats fiables)."""
+    a, b = accent[:3], accent2[:3]
+    w, m = white[:3], mute[:3]
+    led = led or a
+    yaml = f"""author: "Ayistax"
+display:
+  DISPLAY_SIZE: 3.5"
+  DISPLAY_ORIENTATION: landscape
+  DISPLAY_RGB_LED: {rgb(led)}
+
+static_images:
+  BACKGROUND:
+    PATH: background.png
+    X: 0
+    Y: 0
+    WIDTH: 480
+    HEIGHT: 320
+
+STATS:
+  CPU:
+    PERCENTAGE:
+      INTERVAL: 1
+      TEXT:
+        SHOW: True
+        SHOW_UNIT: True
+        X: 16
+        Y: 108
+        WIDTH: 120
+        HEIGHT: 40
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 34
+        FONT_COLOR: {rgb(a)}
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+      GRAPH:
+        SHOW: True
+        X: 16
+        Y: 154
+        WIDTH: 204
+        HEIGHT: 10
+        MIN_VALUE: 0
+        MAX_VALUE: 100
+        BAR_COLOR: {rgb(a)}
+        BAR_OUTLINE: False
+        BACKGROUND_IMAGE: background.png
+    TEMPERATURE:
+      INTERVAL: 5
+      TEXT:
+        SHOW: True
+        SHOW_UNIT: True
+        X: 148
+        Y: 114
+        WIDTH: 78
+        HEIGHT: 28
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 20
+        FONT_COLOR: {rgb(w)}
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+  GPU:
+    INTERVAL: 1
+    PERCENTAGE:
+      TEXT:
+        SHOW: True
+        SHOW_UNIT: True
+        X: 254
+        Y: 108
+        WIDTH: 120
+        HEIGHT: 40
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 34
+        FONT_COLOR: {rgb(b)}
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+      GRAPH:
+        SHOW: True
+        X: 254
+        Y: 154
+        WIDTH: 204
+        HEIGHT: 10
+        MIN_VALUE: 0
+        MAX_VALUE: 100
+        BAR_COLOR: {rgb(b)}
+        BAR_OUTLINE: False
+        BACKGROUND_IMAGE: background.png
+    TEMPERATURE:
+      TEXT:
+        SHOW: True
+        SHOW_UNIT: True
+        X: 386
+        Y: 114
+        WIDTH: 78
+        HEIGHT: 28
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 20
+        FONT_COLOR: {rgb(w)}
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+    MEMORY_PERCENT:
+      TEXT:
+        SHOW: True
+        SHOW_UNIT: True
+        X: 300
+        Y: 166
+        WIDTH: 56
+        HEIGHT: 16
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 12
+        FONT_COLOR: {rgb(b)}
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+      GRAPH:
+        SHOW: True
+        X: 360
+        Y: 170
+        WIDTH: 98
+        HEIGHT: 8
+        MIN_VALUE: 0
+        MAX_VALUE: 100
+        BAR_COLOR: {rgb(b)}
+        BAR_OUTLINE: False
+        BACKGROUND_IMAGE: background.png
+  MEMORY:
+    INTERVAL: 5
+    VIRTUAL:
+      PERCENT_TEXT:
+        SHOW: True
+        SHOW_UNIT: True
+        X: 16
+        Y: 250
+        WIDTH: 90
+        HEIGHT: 28
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 22
+        FONT_COLOR: {rgb(a)}
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+      GRAPH:
+        SHOW: True
+        X: 16
+        Y: 286
+        WIDTH: 126
+        HEIGHT: 10
+        MIN_VALUE: 0
+        MAX_VALUE: 100
+        BAR_COLOR: {rgb(a)}
+        BAR_OUTLINE: False
+        BACKGROUND_IMAGE: background.png
+  DISK:
+    INTERVAL: 10
+    USED:
+      PERCENT_TEXT:
+        SHOW: True
+        SHOW_UNIT: True
+        X: 174
+        Y: 250
+        WIDTH: 90
+        HEIGHT: 28
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 22
+        FONT_COLOR: {rgb(a)}
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+      GRAPH:
+        SHOW: True
+        X: 174
+        Y: 286
+        WIDTH: 126
+        HEIGHT: 10
+        MIN_VALUE: 0
+        MAX_VALUE: 100
+        BAR_COLOR: {rgb(a)}
+        BAR_OUTLINE: False
+        BACKGROUND_IMAGE: background.png
+  NET:
+    INTERVAL: 1
+    ETH:
+      DOWNLOAD:
+        TEXT:
+          SHOW: True
+          X: 390
+          Y: 248
+          WIDTH: 74
+          HEIGHT: 18
+          FONT: roboto-mono/RobotoMono-Bold.ttf
+          FONT_SIZE: 13
+          FONT_COLOR: {rgb(b)}
+          BACKGROUND_IMAGE: background.png
+          ALIGN: right
+          ANCHOR: rt
+      UPLOAD:
+        TEXT:
+          SHOW: True
+          X: 390
+          Y: 276
+          WIDTH: 74
+          HEIGHT: 18
+          FONT: roboto-mono/RobotoMono-Bold.ttf
+          FONT_SIZE: 13
+          FONT_COLOR: {rgb(w)}
+          BACKGROUND_IMAGE: background.png
+          ALIGN: right
+          ANCHOR: rt
+  DATE:
+    INTERVAL: 1
+    DAY:
+      TEXT:
+        FORMAT: "dd MMM"
+        SHOW: True
+        X: 292
+        Y: 14
+        WIDTH: 88
+        HEIGHT: 18
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 12
+        FONT_COLOR: {rgb(m)}
+        BACKGROUND_IMAGE: background.png
+        ALIGN: right
+        ANCHOR: rt
+    HOUR:
+      TEXT:
+        FORMAT: "HH:mm"
+        SHOW: True
+        X: 392
+        Y: 12
+        WIDTH: 72
+        HEIGHT: 22
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 16
+        FONT_COLOR: {rgb(w)}
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+"""
+    out = THEMES / name
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "theme.yaml").write_text(yaml, encoding="utf-8")
+
+
+def tint_tex(name: str, dark: float, rgb_mul):
+    im = load_tex(name, dark).convert("RGB")
+    px = im.load()
+    r, g, b = rgb_mul
+    for y in range(H):
+        for x in range(W):
+            pr, pg, pb = px[x, y]
+            px[x, y] = (
+                min(255, int(pr * r)),
+                min(255, int(pg * g)),
+                min(255, int(pb * b)),
+            )
+    return im
+
+
+def gradient_bg(c1, c2):
+    im = Image.new("RGB", (W, H))
+    px = im.load()
+    for y in range(H):
+        t = y / (H - 1)
+        col = tuple(int(c1[i] * (1 - t) + c2[i] * t) for i in range(3))
+        for x in range(W):
+            px[x, y] = col
+    return im
+
+
+def hud_horizon(bg, title, a, b, white, mute, cpu_lbl="CPU", gpu_lbl="GPU"):
+    glass = (6, 10, 18, 168)
+    line = a[:3] + (90,)
+    bg = panel(bg, (6, 6, 468, 30), (6, 10, 18, 190), line, 8)
+    bg = panel(bg, (6, 42, 230, 168), glass, line, 12)
+    bg = panel(bg, (244, 42, 230, 168), glass, b[:3] + (90,), 12)
+    bg = panel(bg, (6, 218, 152, 94), glass, line, 10)
+    bg = panel(bg, (164, 218, 152, 94), glass, line, 10)
+    bg = panel(bg, (322, 218, 152, 94), glass, b[:3] + (90,), 10)
+    bg = bg.filter(ImageFilter.SMOOTH)
+    d = ImageDraw.Draw(bg)
+    accent_bar(d, 16, 42, 86, a)
+    accent_bar(d, 254, 42, 86, b)
+    accent_bar(d, 16, 218, 54, a)
+    accent_bar(d, 174, 218, 62, a)
+    accent_bar(d, 332, 218, 48, b)
+    text(d, (16, 12), title, F_TITLE(16), a)
+    text(d, (16, 50), cpu_lbl, F_SANS(13), white)
+    text(d, (254, 50), gpu_lbl, F_SANS(13), white)
+    text(d, (16, 226), "RAM", F_SANS(13), white)
+    text(d, (174, 226), "DISCO", F_SANS(13), white)
+    text(d, (332, 226), "RED", F_SANS(13), white)
+    text(d, (16, 96), "USO", F_MONO(9), mute)
+    text(d, (150, 96), "TEMP", F_MONO(9), mute)
+    text(d, (254, 96), "USO", F_MONO(9), mute)
+    text(d, (388, 96), "TEMP", F_MONO(9), mute)
+    text(d, (254, 168), "VRAM", F_MONO(9), mute)
+    text(d, (332, 250), "BAJADA", F_MONO(8), mute)
+    text(d, (332, 278), "SUBIDA", F_MONO(8), mute)
+    preview = bg.copy()
+    pd = ImageDraw.Draw(preview)
+    text(pd, (392, 12), "21:47", F_MONO(16), white)
+    text(pd, (20, 108), "18%", F_MONO(34), a)
+    text(pd, (258, 108), "6%", F_MONO(34), b)
+    return bg, preview
+
+
+def pack(name, title, bg, a, b, white=(240, 244, 255, 255), mute=(170, 186, 210, 220), cpu="PROCESADOR", gpu="GRAFICA"):
+    bg, preview = hud_horizon(bg, title, a, b, white, mute, cpu, gpu)
+    save_theme(name, bg, preview)
+    write_horizon_yaml(name, a, b, white, mute)
+    print("pack", name)
+
+
+def extra_themes():
+    w = (240, 244, 255, 255)
+    pack(
+        "ConilES", "CONIL",
+        tint_tex("neon.jpg", 0.42, (0.55, 0.85, 1.25)),
+        (255, 196, 92, 230), (64, 210, 220, 230), w, (180, 200, 210, 220),
+        "CPU  PLAYA", "GPU  SOL",
+    )
+    pack(
+        "EmberES", "EMBER",
+        tint_tex("carbon.jpg", 0.36, (1.35, 0.45, 0.25)),
+        (255, 92, 40, 230), (255, 176, 48, 230), w, (210, 160, 140, 220),
+        "CPU  FUEGO", "GPU  LAVA",
+    )
+    pack(
+        "HieloES", "HIELO",
+        gradient_bg((8, 18, 36), (40, 90, 130)),
+        (180, 230, 255, 230), (120, 200, 255, 230), w, (160, 190, 210, 220),
+        "CPU  FRIO", "GPU  NIEVE",
+    )
+    pack(
+        "AtardecerES", "ATARDECER",
+        gradient_bg((48, 12, 40), (255, 110, 40)),
+        (255, 140, 70, 230), (220, 80, 160, 230), w, (220, 180, 170, 220),
+        "CPU  OCASO", "GPU  CIELO",
+    )
+    pack(
+        "VioletaES", "VIOLETA",
+        tint_tex("neon.jpg", 0.40, (1.1, 0.45, 1.35)),
+        (190, 90, 255, 230), (255, 90, 200, 230), w, (200, 170, 220, 220),
+        "CPU  NEON", "GPU  ROSA",
+    )
+    pack(
+        "MinimalES", "MINIMAL",
+        gradient_bg((12, 12, 14), (28, 28, 32)),
+        (230, 230, 230, 230), (140, 200, 255, 230), w, (150, 150, 155, 220),
+        "CPU", "GPU",
+    )
+    pack(
+        "CircuitoES", "CIRCUITO",
+        tint_tex("carbon.jpg", 0.34, (1.2, 0.35, 0.35)),
+        (255, 40, 40, 230), (255, 210, 40, 230), w, (210, 180, 140, 220),
+        "CPU  MOTOR", "GPU  PISTA",
+    )
+    pack(
+        "BosqueES", "BOSQUE",
+        tint_tex("crt.jpg", 0.40, (0.45, 1.15, 0.55)),
+        (90, 220, 110, 230), (180, 230, 90, 230), w, (160, 200, 160, 220),
+        "CPU  HOJA", "GPU  MUSGO",
+    )
+    pack(
+        "AdminES", "ADMIN TAREAS",
+        gradient_bg((16, 22, 32), (24, 40, 64)),
+        (80, 170, 255, 230), (40, 220, 160, 230), w, (160, 180, 200, 220),
+        "CPU  NUCLEO", "GPU  RENDER",
+    )
+
+
 if __name__ == "__main__":
     horizon()
     noche()
     terminal()
+    extra_themes()
     print("ok")
+
