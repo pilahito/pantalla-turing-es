@@ -7,8 +7,6 @@ using System.Security.Principal;
 
 internal static class Program
 {
-    private const string Root = @"E:\turing-smart-screen-python";
-
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern int MessageBox(IntPtr hWnd, string text, string caption, uint type);
 
@@ -19,10 +17,38 @@ internal static class Program
         return p.IsInRole(WindowsBuiltInRole.Administrator);
     }
 
+    private static string FindRoot()
+    {
+        string[] candidates = new string[]
+        {
+            @"E:\turing-smart-screen-python",
+            Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "turing-smart-screen-python"),
+        };
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            if (string.IsNullOrEmpty(candidates[i]))
+                continue;
+            if (File.Exists(Path.Combine(candidates[i], "main.py"))
+                && File.Exists(Path.Combine(candidates[i], "config.yaml")))
+                return candidates[i];
+        }
+        return @"E:\turing-smart-screen-python";
+    }
+
     [STAThread]
     private static void Main(string[] args)
     {
-        string exe = "Turing-Iniciar";
+        string root = FindRoot();
+        if (!File.Exists(Path.Combine(root, "main.py")))
+        {
+            MessageBox(IntPtr.Zero,
+                "No encuentro el proyecto.\nDebe estar en:\nE:\\turing-smart-screen-python",
+                "Pantalla Turing", 0x10);
+            return;
+        }
+
+        string exe = "PantallaTuring";
         try
         {
             exe = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName);
@@ -30,7 +56,9 @@ internal static class Program
         catch { }
 
         Dictionary<string, string> map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        map["Turing-Iniciar"] = "";
+        map["PantallaTuring"] = "ConilES";
+        map["Pantalla Turing"] = "ConilES";
+        map["Turing-Iniciar"] = "ConilES";
         map["Turing-Admin"] = "";
         map["Turing-Horizonte"] = "HorizonES";
         map["Turing-NocheNeon"] = "NocheNeon";
@@ -56,8 +84,8 @@ internal static class Program
         map["Turing-Azul"] = "SimpleBlue_H";
         map["Turing-Naranja"] = "SimpleOrange_H";
         map["Turing-Verde"] = "SimpleGreen_H";
-        map["Turing-CyberpunkH"] = "Cyberpunk_H";
         map["Turing-Fallout"] = "Fallout_H";
+        map["Turing-CyberpunkH"] = "Cyberpunk_H";
         map["Turing-TermH"] = "Terminal_H";
 
         string theme = "";
@@ -82,26 +110,32 @@ internal static class Program
             return;
         }
 
-        string py = Path.Combine(Root, @"venv\Scripts\pythonw.exe");
-        if (!File.Exists(py))
-            py = Path.Combine(Root, @"venv\Scripts\python.exe");
+        string py = Path.Combine(root, @"venv\Scripts\python.exe");
         if (!File.Exists(py))
         {
-            MessageBox(IntPtr.Zero, "No hay Python en venv.\\nEjecuta Instalar.ps1", "Pantalla Turing", 0x10);
+            MessageBox(IntPtr.Zero, "No hay Python en:\n" + py + "\nEjecuta Instalar.ps1", "Pantalla Turing", 0x10);
             return;
         }
 
+        string lanzar = Path.Combine(root, @"tools\lanzar.py");
         ProcessStartInfo run = new ProcessStartInfo();
         run.FileName = py;
         run.Arguments = string.IsNullOrEmpty(theme)
-            ? "tools\\lanzar.py"
-            : "tools\\lanzar.py \"" + theme.Replace("\"", "") + "\"";
-        run.WorkingDirectory = Root;
+            ? "\"" + lanzar + "\""
+            : "\"" + lanzar + "\" \"" + theme.Replace("\"", "") + "\"";
+        run.WorkingDirectory = root;
         run.UseShellExecute = false;
         run.CreateNoWindow = true;
         try
         {
-            Process.Start(run);
+            Process p = Process.Start(run);
+            if (p == null)
+            {
+                MessageBox(IntPtr.Zero, "No se pudo iniciar Python.", "Pantalla Turing", 0x10);
+                return;
+            }
+            // El script mata la instancia anterior y arranca main.py
+            p.WaitForExit(15000);
         }
         catch (Exception ex)
         {

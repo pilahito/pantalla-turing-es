@@ -140,6 +140,7 @@ dmypy.json
 screencap.png
 tmp
 dist-lanzadores/
+lanzador.log
 
 version.txt
 external/LibreHardwareMonitor/LibreHardwareMonitorLib.sys
