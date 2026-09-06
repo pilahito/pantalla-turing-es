@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+﻿# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -144,3 +144,12 @@ lanzador.log
 
 version.txt
 external/LibreHardwareMonitor/LibreHardwareMonitorLib.sys
+
+# Legacy per-theme launchers (use PantallaTuring.exe)
+Turing-*.exe
+PantallaTuring.exe
+
+
+
+config.local.yaml
+

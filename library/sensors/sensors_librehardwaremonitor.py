@@ -215,21 +215,15 @@ class Cpu(sensors.Cpu):
     def temperature() -> float:
         cpu = get_hw_and_update(Hardware.HardwareType.Cpu)
         try:
-            # By default, the average temperature of all CPU cores will be used
-            for sensor in cpu.Sensors:
-                if sensor.SensorType == Hardware.SensorType.Temperature and str(sensor.Name).startswith(
-                        "Core Average") and sensor.Value is not None:
-                    return float(sensor.Value)
-            # If not available, the max core temperature will be used
-            for sensor in cpu.Sensors:
-                if sensor.SensorType == Hardware.SensorType.Temperature and str(sensor.Name).startswith(
-                        "Core Max") and sensor.Value is not None:
-                    return float(sensor.Value)
-            # If not available, the CPU Package temperature (usually same as max core temperature) will be used
-            for sensor in cpu.Sensors:
-                if sensor.SensorType == Hardware.SensorType.Temperature and str(sensor.Name).startswith(
-                        "CPU Package") and sensor.Value is not None:
-                    return float(sensor.Value)
+            # Preferencia exactitud: Tctl (AMD) / Package / Core Average / Core Max / Core*
+            preferred_prefixes = (
+                "Tctl", "CPU Tctl", "Core Average", "CPU Package", "Package", "Core Max", "CCD1", "CCD"
+            )
+            for prefix in preferred_prefixes:
+                for sensor in cpu.Sensors:
+                    if sensor.SensorType == Hardware.SensorType.Temperature and sensor.Value is not None:
+                        if str(sensor.Name).startswith(prefix):
+                            return float(sensor.Value)
             # Otherwise any sensor named "Core..." will be used
             for sensor in cpu.Sensors:
                 if sensor.SensorType == Hardware.SensorType.Temperature and str(sensor.Name).startswith(
@@ -242,18 +236,43 @@ class Cpu(sensors.Cpu):
 
     @staticmethod
     def fan_percent(fan_name: str = None) -> float:
+        # Prefer CPU/Processor labelled Control/Fan; then #2; then any Control %
         mb = get_hw_and_update(Hardware.HardwareType.Motherboard)
         try:
+            candidates = []
             for sh in mb.SubHardware:
                 sh.Update()
                 for sensor in sh.Sensors:
-                    if sensor.SensorType == Hardware.SensorType.Control and "#2" in str(
-                            sensor.Name) and sensor.Value is not None:  # Is Motherboard #2 Fan always the CPU Fan ?
+                    if sensor.Value is None:
+                        continue
+                    sn = str(sensor.Name)
+                    st = sensor.SensorType
+                    if st not in (Hardware.SensorType.Control, Hardware.SensorType.Fan):
+                        continue
+                    if fan_name and fan_name.lower() in sn.lower():
                         return float(sensor.Value)
+                    score = 0
+                    up = sn.upper()
+                    if "CPU" in up or "PROC" in up:
+                        score = 3
+                    elif "#2" in sn:
+                        score = 2
+                    elif st == Hardware.SensorType.Control:
+                        score = 1
+                    if score:
+                        candidates.append((score, float(sensor.Value)))
+            if candidates:
+                candidates.sort(key=lambda x: -x[0])
+                return candidates[0][1]
         except:
             pass
-
-        # No Fan Speed sensor for this CPU model
+        try:
+            cpu = get_hw_and_update(Hardware.HardwareType.Cpu)
+            for sensor in cpu.Sensors:
+                if sensor.SensorType == Hardware.SensorType.Control and sensor.Value is not None:
+                    return float(sensor.Value)
+        except:
+            pass
         return math.nan
 
 

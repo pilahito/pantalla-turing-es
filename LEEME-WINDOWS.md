@@ -1,50 +1,42 @@
-# Turing Smart Screen 3.5" — Windows (español)
+﻿# Turing Smart Screen 3.5" — Windows (español)
 
-Pantalla: **COM3** (`USB35INCHIPSV2`, revision A).
-Software: **turing-smart-screen-python** (GitHub, LibreHardwareMonitor).
-El programa cerrado UsbPCMonitor se eliminó: bloqueaba COM3 y no tiene comunidad.
+Pantalla típica: COM3 (`USB35INCHIPSV2`, revision A).
+Software: **turing-smart-screen-python** + LibreHardwareMonitor.
 
-## Arrancar (escritorio, .exe — ya no hay .bat)
+## Arrancar (un solo .exe)
 
-| Acceso | Tema |
-|--------|------|
-| `Turing-Iniciar.exe` / **Pantalla Turing** | el tema actual |
-| `Turing-Admin.exe` | igual, con UAC (temps CPU reales) |
-| `Turing-Horizonte.exe` | HorizonES (español) |
-| `Turing-NocheNeon.exe` | NocheNeon (español) |
-| `Turing-Terminal.exe` | TerminalES (español) |
-| `Turing-Conil.exe` | ConilES (playa) |
-| `Turing-Ember.exe` | EmberES (lava) |
-| `Turing-Hielo.exe` | HieloES |
-| `Turing-Atardecer.exe` | AtardecerES |
-| `Turing-Violeta.exe` | VioletaES |
-| `Turing-Minimal.exe` | MinimalES |
-| `Turing-Circuito.exe` | CircuitoES |
-| `Turing-Bosque.exe` | BosqueES |
-| `Turing-Tareas.exe` | AdminES (administrador de tareas) |
-| `Turing-Clasico.exe` | 3.5inchTheme2 horizontal |
-| `Turing-Azul.exe` | SimpleBlue horizontal |
-| `Turing-Naranja.exe` | SimpleOrange horizontal |
-| `Turing-Verde.exe` | SimpleGreen horizontal |
-| `Turing-Fallout.exe` | Fallout horizontal |
-| `Turing-CyberpunkH.exe` | Cyberpunk horizontal |
-| `Turing-TermH.exe` | Terminal original horizontal |
-| `Turing-Cyberdeck.exe` | Cyberdeck |
-| `Turing-6Celdas.exe` | Landscape6Grid |
-| `Turing-Tierra.exe` | LandscapeEarth |
-| `Turing-AzulMagico.exe` | LandscapeMagicBlue |
-| `Turing-CyberArasaka.exe` | CyberArasaka landscape |
-| `Turing-OnePiece.exe` | One Piece |
-| `Turing-Reloj.exe` | BigClock |
-| `Turing-Servidor.exe` | LandscapeModernDevice35 |
+Usa **`PantallaTuring.exe`** (menú gráfico en español):
 
-Piden administrador una vez: así salen CPU/GPU/RAM/disco como en el Administrador de tareas (LibreHardwareMonitor).
+- Lista temas ES / horizontales
+- Muestra tema actual y puerto COM
+- **Iniciar** / **Iniciar como administrador** (UAC → temps reales)
+- **Detener**, **Aplicar tema**, **Abrir carpeta**
+- Checkbox **Invertir pantalla** (`DISPLAY_REVERSE`)
 
-Cierra cualquier UsbPCMonitor si reaparece.
+CLI (sin GUI, compatibilidad):
 
-## Temas horizontales 3.5" en español
+```text
+PantallaTuring.exe ConilES
+PantallaTuring.exe HorizonES
+```
 
-Temas ES propios: HorizonES, NocheNeon, TerminalES, ConilES, EmberES, HieloES, AtardecerES, VioletaES, MinimalES, CircuitoES, BosqueES, AdminES.
-El resto de skins **landscape 480×320** ya cargan en la 3.5" (antes fallaban por `DISPLAY_SIZE: "3.5"` vs `3.5"`).
+Compilar de nuevo:
 
-Si la imagen sale al revés: en `config.yaml` pon `DISPLAY_REVERSE: true`.
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\build-pantalla-turing.ps1
+```
+
+Fuente: `tools\PantallaTuringUI.cs` (única fuente de verdad del lanzador).
+Los antiguos `Turing-*.exe` quedan **obsoletos** (opcional en `dist-lanzadores/`).
+
+## Temas horizontales ES
+
+HorizonES, NocheNeon, TerminalES, ConilES, EmberES, HieloES, AtardecerES, VioletaES, MinimalES, CircuitoES, BosqueES, AdminES + variantes `*_H` / Landscape.
+
+## Sensores más exactos
+
+Ver `docs/SENSORES-ES.md`. En Windows: **Iniciar como admin**. Copia `config.example.yaml` → `config.yaml` y pon tu `WEATHER_API_KEY` (no la subas a git).
+
+## Scripts PowerShell (legacy)
+
+`Iniciar.ps1`, `Iniciar-Admin.ps1`, `Cambiar-Tema.ps1`, `Instalar.ps1`.

@@ -233,6 +233,87 @@ STATS:
         BACKGROUND_IMAGE: background.png
         ALIGN: left
         ANCHOR: lt
+  CUSTOM:
+    INTERVAL: 5
+    CpuModel:
+      TEXT:
+        SHOW: True
+        X: 16
+        Y: 72
+        WIDTH: 220
+        HEIGHT: 18
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 11
+        FONT_COLOR: 160, 180, 200
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+    GpuModel:
+      TEXT:
+        SHOW: True
+        X: 254
+        Y: 72
+        WIDTH: 210
+        HEIGHT: 18
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 11
+        FONT_COLOR: 160, 180, 200
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+    RamInfo:
+      TEXT:
+        SHOW: True
+        X: 16
+        Y: 228
+        WIDTH: 140
+        HEIGHT: 16
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 10
+        FONT_COLOR: 160, 180, 200
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+    DiskModel:
+      TEXT:
+        SHOW: True
+        X: 174
+        Y: 228
+        WIDTH: 140
+        HEIGHT: 16
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 10
+        FONT_COLOR: 160, 180, 200
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+    NvmeTemp:
+      TEXT:
+        SHOW: True
+        X: 320
+        Y: 228
+        WIDTH: 56
+        HEIGHT: 16
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 10
+        FONT_COLOR: 240, 244, 255
+        BACKGROUND_IMAGE: background.png
+        ALIGN: left
+        ANCHOR: lt
+    CpuFanRpm:
+      TEXT:
+        SHOW: True
+        X: 390
+        Y: 228
+        WIDTH: 74
+        HEIGHT: 16
+        FONT: roboto-mono/RobotoMono-Bold.ttf
+        FONT_SIZE: 10
+        FONT_COLOR: 40, 220, 160
+        BACKGROUND_IMAGE: background.png
+        ALIGN: right
+        ANCHOR: rt
+
   DATE:
     INTERVAL: 1
     DAY:
@@ -251,7 +332,7 @@ STATS:
         ANCHOR: rt
     HOUR:
       TEXT:
-        FORMAT: "HH:mm"
+        FORMAT: "HH:mm:ss"
         SHOW: True
         X: 392
         Y: 12

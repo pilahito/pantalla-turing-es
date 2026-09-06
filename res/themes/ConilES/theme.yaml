@@ -251,7 +251,7 @@ STATS:
         ANCHOR: rt
     HOUR:
       TEXT:
-        FORMAT: "HH:mm"
+        FORMAT: "HH:mm:ss"
         SHOW: True
         X: 392
         Y: 12

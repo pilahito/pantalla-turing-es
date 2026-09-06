@@ -146,18 +146,20 @@ class Cpu(sensors.Cpu):
         cpu_temp = math.nan
         try:
             sensors_temps = psutil.sensors_temperatures()
-            if 'coretemp' in sensors_temps:
-                # Intel CPU
-                cpu_temp = sensors_temps['coretemp'][0].current
-            elif 'k10temp' in sensors_temps:
-                # AMD CPU
-                cpu_temp = sensors_temps['k10temp'][0].current
-            elif 'cpu_thermal' in sensors_temps:
-                # ARM CPU
-                cpu_temp = sensors_temps['cpu_thermal'][0].current
-            elif 'zenpower' in sensors_temps:
-                # AMD CPU with zenpower (k10temp is in blacklist)
-                cpu_temp = sensors_temps['zenpower'][0].current
+            # Prefer labelled Tctl / Package / Tdie when present
+            preferred_labels = ("tctl", "package id 0", "tdie", "cpu")
+            for chip_name in ("k10temp", "zenpower", "coretemp", "cpu_thermal"):
+                if chip_name not in sensors_temps:
+                    continue
+                entries = sensors_temps[chip_name]
+                # label match first
+                for pref in preferred_labels:
+                    for entry in entries:
+                        label = (entry.label or "").lower()
+                        if pref in label and entry.current is not None:
+                            return float(entry.current)
+                if entries and entries[0].current is not None:
+                    return float(entries[0].current)
         except:
             # psutil.sensors_temperatures not available on Windows / MacOS
             pass
