@@ -1,4 +1,4 @@
-﻿config:
+config:
   COM_PORT: AUTO
   THEME: ConilES
   HW_SENSORS: AUTO
@@ -6,7 +6,7 @@
   WLO: ''
   CPU_FAN: AUTO
   PING: 8.8.8.8
-  WEATHER_API_KEY: YOUR_OPENWEATHERMAP_API_KEY
+  WEATHER_API_KEY: ''  # empty = Open-Meteo (no key). Or set OpenWeatherMap key.
   WEATHER_LATITUDE: 0.0
   WEATHER_LONGITUDE: 0.0
   WEATHER_UNITS: metric

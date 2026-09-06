@@ -888,13 +888,16 @@ class Weather:
                 units = config.CONFIG_DATA['config'].get('WEATHER_UNITS', "metric")
                 lang = config.CONFIG_DATA['config'].get('WEATHER_LANGUAGE', "en")
                 deg = WEATHER_UNITS.get(units, '°?')
-                if api_key:
-                    urls = [
-                        f'https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,daily,alerts&appid={api_key}&units={units}&lang={lang}',
-                        f'https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units={units}&lang={lang}',
-                    ]
-                    desc = None
-                    try:
+                # Prefer OpenWeatherMap if a real API key is set; otherwise Open-Meteo (no key).
+                placeholder = ("", "YOUR_OPENWEATHERMAP_API_KEY", "none", "null")
+                use_owm = bool(api_key) and str(api_key).strip() not in placeholder
+                desc = None
+                try:
+                    if use_owm:
+                        urls = [
+                            f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=minutely,hourly,daily,alerts&appid={api_key}&units={units}&lang={lang}",
+                            f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units={units}&lang={lang}",
+                        ]
                         for url in urls:
                             response = requests.get(url, timeout=8)
                             if response.status_code != 200:
@@ -918,16 +921,71 @@ class Weather:
                                 desc = ""
                             now = datetime.datetime.now()
                             time = f"{now.hour:02d}:{now.minute:02d}"
-                            logger.info("Tiempo Conil: %s %s", temp, desc)
+                            logger.info("Weather OWM: %s %s", temp, desc)
                             break
                         if temp is None and not desc:
                             desc = "Sin datos de tiempo"
-                    except Exception as e:
-                        logger.error("Error fetching OpenWeatherMap API: %s", e)
-                        desc = "Tiempo no disponible"
-                else:
-                    logger.warning("No OpenWeatherMap API key provided in config.yaml")
-                    desc = "No OpenWeatherMap API key"
+                    else:
+                        # Open-Meteo — free, no API key
+                        if not lat or not lon:
+                            logger.warning("Open-Meteo needs WEATHER_LATITUDE / WEATHER_LONGITUDE")
+                            desc = "Sin lat/lon (detecta ubicacion)"
+                        else:
+                            temp_unit = "fahrenheit" if str(units).lower() == "imperial" else "celsius"
+                            url = (
+                                "https://api.open-meteo.com/v1/forecast"
+                                f"?latitude={lat}&longitude={lon}"
+                                "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code"
+                                f"&temperature_unit={temp_unit}"
+                            )
+                            response = requests.get(url, timeout=8)
+                            if response.status_code != 200:
+                                logger.warning("Open-Meteo HTTP %s", response.status_code)
+                                desc = "tiempo no disponible"
+                            else:
+                                data = response.json()
+                                cur = data.get("current") or {}
+                                tval = cur.get("temperature_2m")
+                                fval = cur.get("apparent_temperature")
+                                hval = cur.get("relative_humidity_2m")
+                                code = cur.get("weather_code")
+                                WMO = {
+                                    0: ("Despejado", "Clear"),
+                                    1: ("Mayormente despejado", "Mainly clear"),
+                                    2: ("Parcialmente nublado", "Partly cloudy"),
+                                    3: ("Nublado", "Overcast"),
+                                    45: ("Niebla", "Fog"),
+                                    48: ("Niebla", "Fog"),
+                                    51: ("Llovizna", "Drizzle"),
+                                    53: ("Llovizna", "Drizzle"),
+                                    55: ("Llovizna", "Drizzle"),
+                                    61: ("Lluvia", "Rain"),
+                                    63: ("Lluvia", "Rain"),
+                                    65: ("Lluvia intensa", "Heavy rain"),
+                                    71: ("Nieve", "Snow"),
+                                    73: ("Nieve", "Snow"),
+                                    75: ("Nieve intensa", "Heavy snow"),
+                                    80: ("Chubascos", "Showers"),
+                                    81: ("Chubascos", "Showers"),
+                                    82: ("Chubascos fuertes", "Heavy showers"),
+                                    95: ("Tormenta", "Thunderstorm"),
+                                    96: ("Tormenta", "Thunderstorm"),
+                                    99: ("Tormenta", "Thunderstorm"),
+                                }
+                                pair = WMO.get(int(code) if code is not None else -1, ("Variable", "Variable"))
+                                desc = pair[0] if str(lang).lower().startswith("es") else pair[1]
+                                if tval is not None:
+                                    temp = f"{float(tval):.0f}{deg}"
+                                if fval is not None:
+                                    feel = f"({float(fval):.0f}{deg})"
+                                if hval is not None:
+                                    humidity = f"{float(hval):.0f}%"
+                                now = datetime.datetime.now()
+                                time = f"{now.hour:02d}:{now.minute:02d}"
+                                logger.info("Weather Open-Meteo: %s %s", temp, desc)
+                except Exception as e:
+                    logger.error("Error fetching weather: %s", e)
+                    desc = "Tiempo no disponible"
 
         if activate:
             # Display Temperature
