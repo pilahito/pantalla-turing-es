@@ -1,13 +1,14 @@
-﻿# ALPHA
+# ALPHA PRELIMINAR
 
-Esta publicacion es **alpha**. La interfaz nueva (Centro Turing) todavia no esta cerrada.
+Esta publicacion es **alpha preliminar**. No es la version final y no hay instalador.
 
-- No uses **Configuracion** del icono antiguo de `PantallaTuring.exe`. Esa pantalla corrompe `config.yaml`.
-- Arranca la pantalla con un solo proceso: `venv\Scripts\python.exe main.py`.
-- El centro se abre con `Centro-Turing.bat`.
-- Algunos temas horizontales no son compatibles (por ejemplo `bash-dark-green-gpu_H`). Elige solo temas 3.5 pulgadas en horizontal.
-- El clima necesita latitud y longitud. Si faltan, Open-Meteo no pinta el tiempo.
-- El icono de bandeja, el arranque automatico y mas variantes de color/animacion siguen en curso. No es la version final.
+- Abre `Centro-Turing.bat` (Windows) o `./centro-turing.sh` (Linux).
+- La pantalla arranca con un solo `main.py`.
+- No uses el exe antiguo ni Configuracion clasica: corrompe `config.yaml`.
+- Tu pantalla de prueba es 3.5 horizontal. Los temas verticales salen solo si eliges ese modelo.
+- Clima: Open-Meteo, sin clave. Hace falta latitud y longitud.
+- Temas nuevos de prueba: `ClimaES`, `ViceES`, `BloqueES`. Los verticales `ViceES_V` y `BloqueES_V` no se muestran en 3.5 horizontal.
+
 
 ## Windows / edición española (horizontal)
 

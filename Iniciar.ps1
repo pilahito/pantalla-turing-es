@@ -1,19 +1,13 @@
-# Arranca el monitor Turing 3.5" (no necesita administrador).
+﻿# Arranca la pantalla con main.py. El centro nuevo es Centro-Turing.bat.
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Root
-
 $py = Join-Path $Root "venv\Scripts\python.exe"
-if (-not (Test-Path $py)) {
-    Write-Host "No hay venv. Ejecuta primero Instalar.ps1"
-    pause
-    exit 1
+if (-not (Test-Path $py)) { Write-Host "No hay venv. Ejecuta Instalar.ps1"; exit 1 }
+$running = Get-CimInstance Win32_Process | Where-Object {
+    $_.CommandLine -and $_.CommandLine -match "turing-smart-screen-python\\main\.py"
 }
-
-Get-CimInstance Win32_Process | Where-Object {
-    $_.CommandLine -and $_.CommandLine -match 'turing-smart-screen-python\\main\.py'
-} | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
-
-Start-Process -FilePath $py -ArgumentList "main.py" -WorkingDirectory $Root -WindowStyle Hidden
-Write-Host "Pantalla Turing en marcha (icono en la bandeja)."
-Write-Host "Tema: HorizonES  |  Puerto: COM3  |  3.5 pulgadas horizontal"
+if (-not $running) {
+    Start-Process -FilePath $py -ArgumentList "main.py" -WorkingDirectory $Root -WindowStyle Hidden
+}
+Write-Host "Pantalla en marcha con main.py. Centro: Centro-Turing.bat"
