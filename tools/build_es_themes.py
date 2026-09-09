@@ -627,10 +627,34 @@ def extra_themes():
     )
 
 
+def more_supported():
+    w = (240, 244, 255, 255)
+    pack("MareaES", "MAREA", gradient_bg((6, 28, 36), (10, 70, 78)),
+         (90, 220, 200, 230), (180, 240, 220, 230), w, (150, 200, 195, 220), "CPU  OLA", "GPU  FONDO")
+    pack("ForjaES", "FORJA", gradient_bg((36, 16, 10), (90, 36, 14)),
+         (255, 150, 50, 230), (255, 210, 120, 230), w, (210, 160, 120, 220), "CPU  BRASA", "GPU  YUNQUE")
+    pack("AceroES", "ACERO", gradient_bg((18, 22, 28), (55, 64, 74)),
+         (190, 210, 220, 230), (120, 180, 210, 230), w, (160, 170, 180, 220), "CPU  METAL", "GPU  CHAPA")
+    pack("OasisES", "OASIS", gradient_bg((8, 32, 28), (20, 90, 70)),
+         (80, 230, 150, 230), (255, 210, 80, 230), w, (160, 200, 170, 220), "CPU  PALMA", "GPU  AGUA")
+    pack("CobreES", "COBRE", tint_tex("carbon.jpg", 0.38, (1.25, 0.7, 0.35)),
+         (220, 130, 60, 230), (255, 200, 140, 230), w, (200, 170, 140, 220), "CPU  HORNO", "GPU  CABLE")
+    pack("AuroraES", "AURORA", gradient_bg((8, 10, 28), (40, 20, 70)),
+         (80, 255, 180, 230), (160, 120, 255, 230), w, (170, 180, 210, 220), "CPU  NORTE", "GPU  VELO")
+    pack("SolarES", "SOLAR", gradient_bg((40, 24, 6), (160, 70, 10)),
+         (255, 190, 40, 230), (255, 120, 40, 230), w, (230, 190, 140, 220), "CPU  RAYO", "GPU  PANEL")
+    pack("LavandaES", "LAVANDA", gradient_bg((22, 14, 36), (70, 40, 90)),
+         (200, 160, 255, 230), (255, 160, 210, 230), w, (190, 170, 210, 220), "CPU  FLOR", "GPU  BRUMA")
+    pack("RadarES", "RADAR", gradient_bg((6, 16, 12), (12, 40, 28)),
+         (110, 255, 140, 230), (160, 255, 190, 230), w, (150, 200, 160, 220), "CPU  SCAN", "GPU  ECO")
+    pack("MedianocheES", "MEDIANOCHE", tint_tex("crt.jpg", 0.32, (0.35, 0.55, 1.2)),
+         (90, 160, 255, 230), (180, 220, 255, 230), w, (150, 170, 200, 220), "CPU  NOCHE", "GPU  LUNA")
+
 if __name__ == "__main__":
     horizon()
     noche()
     terminal()
     extra_themes()
+    more_supported()
     print("ok")
 

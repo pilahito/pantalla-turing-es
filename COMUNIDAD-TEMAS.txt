@@ -1,0 +1,20 @@
+﻿Temas de la comunidad — Pantalla Turing
+=======================================
+
+La pantalla arranca con el programa original del creador:
+  venv\Scripts\python.exe main.py
+
+Un solo proceso. No uses PantallaTuring.exe (abria dos Python y COM3 fallaba).
+
+Cambiar el aspecto
+  Doble clic en Elegir-Tema.bat
+  Elige un numero. Reinicia el monitor una vez y aplica el tema.
+
+Crear un tema (como el editor del creador)
+  1. Copia una carpeta de res\themes (por ejemplo MareaES) con otro nombre.
+  2. Cambia background.png y las posiciones/colores en theme.yaml.
+  3. Previsualiza sin tocar la pantalla:
+       venv\Scripts\python.exe theme-editor.py NombreDelTema
+  4. Cuando te guste, Elegir-Tema.bat y elige ese nombre.
+
+Un tema es una carpeta con theme.yaml + background.png (480x320, horizontal, 3.5").
