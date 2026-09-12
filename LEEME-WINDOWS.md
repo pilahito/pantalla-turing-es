@@ -1,42 +1,21 @@
-﻿# Turing Smart Screen 3.5" — Windows (español)
+﻿# Turing Smart Screen — Windows (español)
 
-Pantalla típica: COM3 (`USB35INCHIPSV2`, revision A).
-Software: **turing-smart-screen-python** + LibreHardwareMonitor.
+Software: **turing-smart-screen-python** (GPLv3) + Centro Turing.
 
-## Arrancar (un solo .exe)
+## Arrancar
 
-Usa **`PantallaTuring.exe`** (menú gráfico en español):
+1. **`Centro-Turing.bat`** — panel gráfico (Centro Turing v2.2). Solo GUI.
+2. **`Iniciar.ps1`** — enciende la pantalla en segundo plano (sin duplicar `main.py`).
+3. **`Iniciar-Admin.ps1`** — avanzado: sensores LibreHardwareMonitor (UAC).
 
-- Lista temas ES / horizontales
-- Muestra tema actual y puerto COM
-- **Iniciar** / **Iniciar como administrador** (UAC → temps reales)
-- **Detener**, **Aplicar tema**, **Abrir carpeta**
-- Checkbox **Invertir pantalla** (`DISPLAY_REVERSE`)
-
-CLI (sin GUI, compatibilidad):
-
-```text
-PantallaTuring.exe ConilES
-PantallaTuring.exe HorizonES
-```
-
-Compilar de nuevo:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File tools\build-pantalla-turing.ps1
-```
-
-Fuente: `tools\PantallaTuringUI.cs` (única fuente de verdad del lanzador).
-Los antiguos `Turing-*.exe` quedan **obsoletos** (opcional en `dist-lanzadores/`).
+Autostart: en el Panel del Centro, interruptor ON/OFF (atajo silencioso a `Iniciar.ps1`).
 
 ## Temas horizontales ES
 
-HorizonES, NocheNeon, TerminalES, ConilES, EmberES, HieloES, AtardecerES, VioletaES, MinimalES, CircuitoES, BosqueES, AdminES + variantes `*_H` / Landscape.
+HorizonES, ConilES, AdminES, NocheNeon, TerminalES, EmberES, HieloES, AtardecerES, y más.
 
-## Sensores más exactos
+## Configuración
 
-Ver `docs/SENSORES-ES.md`. En Windows: **Iniciar como admin**. Copia `config.example.yaml` → `config.yaml` y pon tu `WEATHER_API_KEY` (no la subas a git).
+Copia `config.example.yaml` → `config.yaml`. No subas claves personales a git.
 
-## Scripts PowerShell (legacy)
-
-`Iniciar.ps1`, `Iniciar-Admin.ps1`, `Cambiar-Tema.ps1`, `Instalar.ps1`.
+Guía corta: `README-WINDOWS-ES.md`. Sensores: `docs/SENSORES-ES.md`.

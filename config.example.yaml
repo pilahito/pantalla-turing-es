@@ -1,4 +1,4 @@
-config:
+﻿config:
   COM_PORT: AUTO
   THEME: ConilES
   HW_SENSORS: AUTO
@@ -11,6 +11,7 @@ config:
   WEATHER_LONGITUDE: 0.0
   WEATHER_UNITS: metric
   WEATHER_LANGUAGE: es
+  CLOCK_FORMAT: 24
 
 display:
   REVISION: A

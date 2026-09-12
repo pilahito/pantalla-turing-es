@@ -3,16 +3,18 @@ import json, re, subprocess, time, tkinter as tk
 from pathlib import Path
 from tkinter import messagebox
 
-ROOT = Path(r"E:\turing-smart-screen-python")
+ROOT = Path(__file__).resolve().parents[1]
 PY = ROOT / "venv" / "Scripts" / "python.exe"
 CFG = ROOT / "config.yaml"
 THEMES = ROOT / "res" / "themes"
 LOG = ROOT / "log.log"
 UI = ROOT / "tools" / "centro_ui.json"
+INICIAR = ROOT / "Iniciar.ps1"
 STARTUP = Path.home() / "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup/Centro Turing.lnk"
 
+VERSION = "2.2"
 BG, SIDE, CARD, FG, MUTED = "#161b22", "#12161c", "#1e2630", "#e6edf3", "#8b9bab"
-CYAN, AMBER, LINE = "#3dccc7", "#e0a050", "#2a3542"
+CYAN, AMBER, LINE, GREEN, RED = "#3dccc7", "#e0a050", "#2a3542", "#3dd68c", "#f07178"
 SKINS = {
     "dark": ("#161b22", "#12161c", "#1e2630", "#e6edf3", "#8b9bab"),
     "light": ("#f4f6f8", "#e8edf2", "#ffffff", "#1b2430", "#5c6b7a"),
@@ -36,7 +38,7 @@ def load_ui():
     return d
 
 def save_ui(d):
-    UI.write_text(json.dumps(d), encoding="utf-8")
+    UI.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
 
 def read_cfg():
     text = CFG.read_text(encoding="utf-8", errors="replace") if CFG.exists() else ""
@@ -88,8 +90,18 @@ def kill_monitor():
     time.sleep(1.0)
 
 def start_monitor():
+    ps = (
+        "Get-CimInstance Win32_Process | Where-Object { "
+        "$_.CommandLine -and $_.CommandLine -like '*main.py*' -and "
+        "$_.CommandLine -like '*turing-smart-screen-python*' "
+        "} | Select-Object -First 1"
+    )
+    r = subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True, text=True)
+    if (r.stdout or "").strip():
+        return
     subprocess.Popen([str(PY), "main.py"], cwd=str(ROOT), creationflags=0x08000000,
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 
 def reload_screen():
     kill_monitor()
@@ -105,30 +117,63 @@ def com_ports():
         return []
 
 def set_autostart(on):
+    # Arranque diario: Iniciar.ps1 silencioso (sin abrir el centro). ROOT portatil.
     if on:
-        ps = (
-            "$s=(New-Object -ComObject WScript.Shell).CreateShortcut('" + str(STARTUP) + "');"
-            "$s.TargetPath='E:\\turing-smart-screen-python\\Centro-Turing.bat';"
-            "$s.WorkingDirectory='E:\\turing-smart-screen-python';$s.Save()"
+        iniciar = str(INICIAR)
+        root = str(ROOT)
+        shortcut = str(STARTUP)
+        ps2 = (
+            "$lnk = '" + shortcut.replace("'", "''") + "';"
+            "$ini = '" + iniciar.replace("'", "''") + "';"
+            "$wd = '" + root.replace("'", "''") + "';"
+            "$s = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk);"
+            "$s.TargetPath = 'powershell.exe';"
+            "$s.Arguments = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"' + $ini + '\"';"
+            "$s.WorkingDirectory = $wd;"
+            "$s.WindowStyle = 7;"
+            "$s.Description = 'Pantalla Turing (arranque silencioso)';"
+            "$s.Save()"
         )
-        subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True)
+        subprocess.run(["powershell", "-NoProfile", "-Command", ps2], capture_output=True)
     elif STARTUP.exists():
         STARTUP.unlink()
+
+
+def autostart_enabled():
+    return STARTUP.exists()
+
+
+def monitor_running():
+    ps = (
+        "Get-CimInstance Win32_Process | Where-Object { "
+        "$_.CommandLine -and $_.CommandLine -like '*main.py*' -and "
+        "$_.CommandLine -like '*turing-smart-screen-python*' "
+        "} | Select-Object -ExpandProperty ProcessId"
+    )
+    try:
+        r = subprocess.run(["powershell", "-NoProfile", "-Command", ps],
+                           capture_output=True, text=True, timeout=8)
+        ids = [x.strip() for x in (r.stdout or "").splitlines() if x.strip().isdigit()]
+        return len(ids) > 0, ids
+    except Exception:
+        return False, []
+
+
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.ui = load_ui()
         self.lang = self.ui["lang"] if self.ui["lang"] in ("es", "en") else "es"
-        self.mode = "ajustes"
+        self.mode = "panel"
         self.apply_skin(self.ui.get("skin", "dark"))
-        self.title("Turing Screen Control Center")
-        self.geometry("1100x680")
-        self.minsize(980, 580)
+        self.title("Centro Turing")
+        self.geometry("1100x700")
+        self.minsize(980, 600)
         self.configure(bg=self.bg)
         self.top = tk.Frame(self, bg=self.side, height=42)
         self.top.pack(fill="x")
-        self.title_lbl = tk.Label(self.top, text="  Turing Screen Control Center   v2",
+        self.title_lbl = tk.Label(self.top, text="  Centro Turing   v" + VERSION,
                                   bg=self.side, fg=self.fg, font=("Segoe UI", 11, "bold"))
         self.title_lbl.pack(side="left", pady=8)
         langs = tk.Frame(self.top, bg=self.side)
@@ -160,7 +205,7 @@ class App(tk.Tk):
         tk.Label(self, textvariable=self.foot, bg=self.side, fg=self.muted, anchor="w",
                  font=("Segoe UI", 9)).pack(fill="x")
         self.paint_lang()
-        self.show("ajustes")
+        self.show("panel")
 
     def apply_skin(self, name):
         c = SKINS.get(name, SKINS["dark"])
@@ -220,24 +265,71 @@ class App(tk.Tk):
         tk.Button(self.main, text=text, command=command, bg=AMBER, fg="#1a1208",
                   relief="flat", font=("Segoe UI", 11, "bold"), padx=16, pady=8).pack(anchor="w", padx=24, pady=12)
 
+
     def page_panel(self, cfg):
-        self.h1("Panel")
-        self.hint(self.tr("Tu pantalla: 3.5 landscape. COM " + (cfg.get("COM_PORT") or "COM3") + ".",
-                          "Your screen: 3.5 landscape. COM " + (cfg.get("COM_PORT") or "COM3") + "."))
+        self.h1(self.tr("Panel", "Dashboard"))
+        self.hint(self.tr("Estado de la minipantalla y acciones principales.",
+                          "Screen status and primary actions."))
+        on, _ = monitor_running()
+        status_txt = self.tr("ENCENDIDA", "ON") if on else self.tr("APAGADA", "OFF")
+        status_color = GREEN if on else RED
         row = tk.Frame(self.main, bg=self.bg)
         row.pack(anchor="w", padx=24, pady=12)
         bits = (
-            (self.tr("Tema", "Theme"), cfg.get("THEME") or "-"),
-            ("COM", cfg.get("COM_PORT") or "COM3"),
-            (self.tr("Brillo", "Brightness"), (cfg.get("BRIGHTNESS") or "25") + " %"),
-            (self.tr("Reloj", "Clock"), (cfg.get("CLOCK_FORMAT") or "24") + " h"),
+            (self.tr("Pantalla", "Screen"), status_txt, status_color),
+            ("COM", cfg.get("COM_PORT") or "AUTO", CYAN),
+            (self.tr("Tema", "Theme"), (cfg.get("THEME") or "-")[:16], CYAN),
+            (self.tr("Brillo", "Brightness"), (cfg.get("BRIGHTNESS") or "25") + " %", CYAN),
         )
-        for title, value in bits:
-            f = tk.Frame(row, bg=self.card, highlightbackground="#2a3542", highlightthickness=1)
+        for title, value, accent in bits:
+            f = tk.Frame(row, bg=self.card, highlightbackground=LINE, highlightthickness=1)
             f.pack(side="left", padx=6)
             tk.Label(f, text=title, bg=self.card, fg=self.muted, font=("Segoe UI", 9)).pack(anchor="w", padx=12, pady=(10, 0))
-            tk.Label(f, text=value, bg=self.card, fg="#3dccc7", font=("Segoe UI", 16, "bold"), width=12).pack(anchor="w", padx=12, pady=(4, 12))
-        self.foot.set(cfg.get("THEME") or "-")
+            tk.Label(f, text=value, bg=self.card, fg=accent, font=("Segoe UI", 15, "bold"), width=12).pack(anchor="w", padx=12, pady=(4, 12))
+        tk.Label(self.main, text=self.tr("Acciones", "Actions"), bg=self.bg, fg=CYAN,
+                 font=("Segoe UI", 10, "bold")).pack(anchor="w", padx=24, pady=(8, 4))
+        actions = tk.Frame(self.main, bg=self.bg)
+        actions.pack(anchor="w", padx=24, pady=6)
+        def do_on():
+            try:
+                start_monitor(); time.sleep(0.5); self.show("panel")
+                self.foot.set(self.tr("Pantalla encendida.", "Screen started."))
+            except Exception as e:
+                messagebox.showerror("Centro Turing", str(e))
+        def do_off():
+            kill_monitor(); self.show("panel")
+            self.foot.set(self.tr("Pantalla apagada.", "Screen stopped."))
+        def do_restart():
+            reload_screen(); self.show("panel")
+            self.foot.set(self.tr("Pantalla reiniciada.", "Screen restarted."))
+        tk.Button(actions, text=self.tr("Encender", "Start"), command=do_on, bg=GREEN, fg="#071014",
+                  relief="flat", font=("Segoe UI", 11, "bold"), padx=16, pady=10).pack(side="left", padx=4)
+        tk.Button(actions, text=self.tr("Apagar", "Stop"), command=do_off, bg=RED, fg="#071014",
+                  relief="flat", font=("Segoe UI", 11, "bold"), padx=16, pady=10).pack(side="left", padx=4)
+        tk.Button(actions, text=self.tr("Reiniciar pantalla", "Restart screen"), command=do_restart,
+                  bg=AMBER, fg="#1a1208", relief="flat", font=("Segoe UI", 11, "bold"), padx=16, pady=10).pack(side="left", padx=4)
+        tk.Label(self.main, text=self.tr("Arranque con Windows", "Start with Windows"), bg=self.bg, fg=CYAN,
+                 font=("Segoe UI", 10, "bold")).pack(anchor="w", padx=24, pady=(14, 4))
+        boot_row = tk.Frame(self.main, bg=self.bg)
+        boot_row.pack(anchor="w", padx=24, pady=4)
+        enabled = autostart_enabled()
+        tk.Label(boot_row,
+                 text=(self.tr("Activo (Iniciar.ps1 silencioso)", "On (silent Iniciar.ps1)") if enabled
+                       else self.tr("Desactivado", "Off")),
+                 bg=self.bg, fg=GREEN if enabled else self.muted, font=("Segoe UI", 10, "bold")).pack(side="left", padx=(0, 12))
+        def boot_on():
+            set_autostart(True); self.show("panel")
+            self.foot.set(self.tr("Autostart ON -> Iniciar.ps1 (sin centro).", "Autostart ON -> Iniciar.ps1 (no center)."))
+        def boot_off():
+            set_autostart(False); self.show("panel")
+            self.foot.set(self.tr("Autostart OFF.", "Autostart OFF."))
+        tk.Button(boot_row, text="ON", command=boot_on, bg=self.card, fg=self.fg, relief="flat", padx=12, pady=6).pack(side="left", padx=3)
+        tk.Button(boot_row, text="OFF", command=boot_off, bg=self.card, fg=self.fg, relief="flat", padx=12, pady=6).pack(side="left", padx=3)
+        tk.Label(self.main, text=self.tr("Atajo: powershell -File Iniciar.ps1 (ventana oculta).",
+                                         "Shortcut: powershell -File Iniciar.ps1 (hidden)."),
+                 bg=self.bg, fg=self.muted, font=("Segoe UI", 9)).pack(anchor="w", padx=24, pady=(4, 0))
+        self.foot.set(self.tr("Modelo: ", "Model: ") + self.ui.get("model", "3.5 landscape")
+                      + "  |  " + (self.tr("Pantalla ON", "Screen ON") if on else self.tr("Pantalla OFF", "Screen OFF")))
 
     def page_tema(self, cfg):
         self.h1(self.tr("Tema", "Theme"))
@@ -412,18 +504,18 @@ class App(tk.Tk):
             write_key("BRIGHTNESS", br.get().strip() or "25")
             reload_screen()
             messagebox.showinfo("Centro Turing", self.tr("Guardado.", "Saved."))
-        def boot():
-            set_autostart(True)
-            self.foot.set(self.tr("Arranque con Windows listo.", "Start with Windows set."))
-        def admin():
-            subprocess.Popen(["powershell", "-NoProfile", "-Command",
-                              "Start-Process -FilePath 'E:\\turing-smart-screen-python\\Centro-Turing.bat' -Verb RunAs"])
         self.gold(self.tr("Guardar", "Save"), save)
+        tk.Label(self.main, text=self.tr(
+            "Nota: sensores LHM (temps reales) necesitan admin via Iniciar-Admin.ps1 (avanzado).",
+            "Note: LHM sensors (real temps) need admin via Iniciar-Admin.ps1 (advanced).",
+        ), bg=self.bg, fg=self.muted, font=("Segoe UI", 9), wraplength=720, justify="left").pack(anchor="w", padx=24, pady=(4, 8))
+        # Arranque ON/OFF esta en Panel
+        def _boot_legacy():
+            set_autostart(True)
+            self.foot.set(self.tr("Usa Panel para ON/OFF de autostart.", "Use Panel for autostart ON/OFF."))
         extra = tk.Frame(self.main, bg=self.bg)
         extra.pack(anchor="w", padx=24)
-        tk.Button(extra, text=self.tr("Arranque con Windows", "Start with Windows"), command=boot,
-                  bg=self.card, fg=self.fg, relief="flat", padx=10, pady=6).pack(side="left", padx=4)
-        tk.Button(extra, text=self.tr("Ejecutar como admin", "Run as admin"), command=admin,
+        tk.Button(extra, text=self.tr("Autostart (ver Panel)", "Autostart (see Panel)"), command=_boot_legacy,
                   bg=self.card, fg=self.fg, relief="flat", padx=10, pady=6).pack(side="left", padx=4)
         tk.Label(self.main, text=self.tr("Avanzado. YAML del tema actual. No toca el codigo del programa.",
                                          "Advanced. YAML of the current theme. Does not touch program code."),
@@ -443,7 +535,7 @@ class App(tk.Tk):
             messagebox.showinfo("Centro Turing", self.tr("YAML guardado.", "YAML saved."))
         tk.Button(self.main, text=self.tr("Guardar YAML", "Save YAML"), command=save_yaml,
                   bg=self.card, fg=self.fg, relief="flat", padx=12, pady=6).pack(anchor="w", padx=24, pady=(0, 8))
-        self.foot.set(self.tr("Tu modelo por defecto: 3.5 landscape.", "Your default model: 3.5 landscape."))
+        self.foot.set(self.tr("Ruta: ", "Path: ") + str(ROOT))
 
 if __name__ == "__main__":
     App().mainloop()
