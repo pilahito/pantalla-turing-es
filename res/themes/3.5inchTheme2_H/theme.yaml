@@ -109,7 +109,7 @@ STATS:
         SHOW: true
         SHOW_UNIT: true
         X: 306
-        Y: 134
+        Y: 132
         FONT: jetbrains-mono/JetBrainsMono-Bold.ttf
         FONT_SIZE: 23
         FONT_COLOR: 255, 255, 255
@@ -205,7 +205,7 @@ STATS:
       TEXT:
         SHOW: true
         X: 232
-        Y: 4
+        Y: 7
         FONT: jetbrains-mono/JetBrainsMono-Bold.ttf
         FONT_SIZE: 10
         FONT_COLOR: 255, 255, 255
@@ -216,7 +216,7 @@ STATS:
       TEXT:
         SHOW: true
         X: 375
-        Y: 4
+        Y: 7
         FONT: jetbrains-mono/JetBrainsMono-Bold.ttf
         FONT_SIZE: 10
         FONT_COLOR: 255, 255, 255

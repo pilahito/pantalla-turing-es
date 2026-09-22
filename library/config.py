@@ -30,7 +30,7 @@ from library.log import logger
 
 
 def load_yaml(configfile):
-    with open(configfile, "rt", encoding='utf8') as stream:
+    with open(configfile, "rt", encoding='utf-8-sig') as stream:
         yamlconfig = yaml.safe_load(stream)
         return yamlconfig
 
@@ -55,12 +55,17 @@ def copy_default(default, theme):
 def load_theme():
     global THEME_DATA
     try:
-        theme_path = Path("res/themes/" + CONFIG_DATA['config']['THEME'])
-        logger.info("Loading theme %s from %s" % (CONFIG_DATA['config']['THEME'], theme_path / "theme.yaml"))
+        # str(): el nombre del tema puede ser numerico (hay temas llamados 26, 30,
+        # 43, 44, 45). Si el config.yaml no lo entrecomilla, YAML lo lee como entero
+        # y "res/themes/" + 26 fallaba con TypeError -> "Theme not found or contains
+        # errors!" sin decir por que.
+        theme_name = str(CONFIG_DATA['config']['THEME'])
+        theme_path = Path("res/themes/" + theme_name)
+        logger.info("Loading theme %s from %s" % (theme_name, theme_path / "theme.yaml"))
         THEME_DATA = load_yaml(MAIN_DIRECTORY / theme_path / "theme.yaml")
         THEME_DATA['PATH'] = str(MAIN_DIRECTORY / theme_path) + "/"
-    except:
-        logger.error("Theme not found or contains errors!")
+    except Exception as error:
+        logger.error(f"Theme not found or contains errors! ({type(error).__name__}: {error})")
         try:
             sys.exit(0)
         except:

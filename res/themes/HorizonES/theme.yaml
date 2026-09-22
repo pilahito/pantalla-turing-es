@@ -212,7 +212,7 @@ STATS:
         SHOW: True
         SHOW_UNIT: False
         X: 168
-        Y: 10
+        Y: 24
         WIDTH: 58
         HEIGHT: 20
         FONT: roboto-mono/RobotoMono-Bold.ttf
@@ -225,7 +225,7 @@ STATS:
       TEXT:
         SHOW: True
         X: 226
-        Y: 12
+        Y: 14
         WIDTH: 64
         HEIGHT: 16
         FONT: roboto-mono/RobotoMono-Bold.ttf
@@ -279,7 +279,7 @@ STATS:
       TEXT:
         SHOW: True
         X: 174
-        Y: 228
+        Y: 235
         WIDTH: 140
         HEIGHT: 16
         FONT: jetbrains-mono/JetBrainsMono-Bold.ttf
@@ -292,7 +292,7 @@ STATS:
       TEXT:
         SHOW: True
         X: 320
-        Y: 228
+        Y: 235
         WIDTH: 56
         HEIGHT: 16
         FONT: jetbrains-mono/JetBrainsMono-Bold.ttf
@@ -336,7 +336,7 @@ STATS:
         FORMAT: "HH:mm:ss"
         SHOW: True
         X: 392
-        Y: 12
+        Y: 14
         WIDTH: 72
         HEIGHT: 22
         FONT: jetbrains-mono/JetBrainsMono-Bold.ttf

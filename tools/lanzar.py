@@ -53,12 +53,34 @@ def python_exe() -> Path:
     raise RuntimeError("No hay Python. En Windows: Instalar.ps1  |  En Linux: ./iniciar.sh --install")
 
 
-def kill_pid(pid: int) -> None:
+def is_our_monitor(pid: int) -> bool:
+    """Verifica que el PID sea de verdad nuestro monitor antes de matarlo.
+
+    Windows reutiliza los PID: si el monitor murio y su numero se reasigno a otro
+    programa, matarlo por PID cerraria un proceso ajeno (por eso se mira la linea
+    de comandos).
+    """
     if pid <= 0:
+        return False
+    try:
+        import psutil
+
+        proc = psutil.Process(pid)
+        cmdline = " ".join(proc.cmdline() or []).replace("\\", "/")
+        return "python" in (proc.name() or "").lower() and "main.py" in cmdline and \
+            str(ROOT).replace("\\", "/") in cmdline
+    except Exception:
+        return False
+
+
+def kill_pid(pid: int) -> None:
+    if not is_our_monitor(pid):
         return
     try:
         if WIN:
-            subprocess.run(["taskkill", "/PID", str(pid), "/F", "/T"], capture_output=True, timeout=8)
+            # CREATE_NO_WINDOW: sin consola, taskkill abriria una ventana negra
+            subprocess.run(["taskkill", "/PID", str(pid), "/F"], capture_output=True, timeout=8,
+                           creationflags=0x08000000)
         else:
             os.kill(pid, 15)
             time.sleep(0.3)
@@ -72,7 +94,8 @@ def kill_pid(pid: int) -> None:
 
 def kill_previous() -> None:
     if WIN:
-        subprocess.run(["taskkill", "/IM", "UsbPCMonitor.exe", "/F"], capture_output=True, timeout=8)
+        subprocess.run(["taskkill", "/IM", "UsbPCMonitor.exe", "/F"], capture_output=True, timeout=8,
+                       creationflags=0x08000000)
     if PID_FILE.exists():
         try:
             kill_pid(int(PID_FILE.read_text(encoding="utf-8").strip()))
@@ -142,14 +165,25 @@ def main() -> int:
         }
         if WIN:
             kwargs["creationflags"] = 0x08000000  # CREATE_NO_WINDOW
+        # Mark a fresh start in log so popup does not show stale errors
+        try:
+            with (ROOT / "log.log").open("a", encoding="utf-8") as lf:
+                lf.write(time.strftime("%d/%m/%Y %H:%M:%S") + " [INFO] --- lanzar start ---\n")
+        except Exception:
+            pass
         proc = subprocess.Popen([str(py), "main.py"], **kwargs)
         PID_FILE.write_text(str(proc.pid), encoding="utf-8")
-        time.sleep(3.0)
+        time.sleep(5.0)
         if proc.poll() is not None:
             tail = ""
             lf = ROOT / "log.log"
             if lf.exists():
-                tail = "\n".join(lf.read_text(encoding="utf-8", errors="replace").splitlines()[-12:])
+                lines = lf.read_text(encoding="utf-8", errors="replace").splitlines()
+                start = 0
+                for i, line in enumerate(lines):
+                    if "--- lanzar start ---" in line:
+                        start = i
+                tail = "\n".join(lines[start:][-20:])
             popup("El monitor se cerro al arrancar.\nRevisa log.log\n\n" + tail[:800])
             return 3
         log("ok pid=%s python=%s" % (proc.pid, py))

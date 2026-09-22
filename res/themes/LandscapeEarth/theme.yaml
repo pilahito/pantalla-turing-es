@@ -1,9 +1,7 @@
-display:
-  DISPLAY_SIZE: 3.5"
---
 author: "@mathoudebine"
 
 display:
+  DISPLAY_SIZE: 3.5"
   DISPLAY_ORIENTATION: landscape
   DISPLAY_RGB_LED: 66, 207, 239
 
@@ -125,7 +123,7 @@ STATS:
         FORMAT: short
         SHOW: True
         X: 14
-        Y: 26
+        Y: 31
         FONT: generale-mono/GeneraleMonoA.ttf
         FONT_SIZE: 26
         FONT_COLOR: 255, 255, 255

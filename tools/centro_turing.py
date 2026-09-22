@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import json, re, subprocess, time, tkinter as tk
+import json, re, subprocess, time, tkinter as tk, urllib.request
 from pathlib import Path
 from tkinter import messagebox
 
@@ -12,7 +12,9 @@ UI = ROOT / "tools" / "centro_ui.json"
 INICIAR = ROOT / "Iniciar.ps1"
 STARTUP = Path.home() / "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup/Centro Turing.lnk"
 
-VERSION = "2.2"
+VERSION = "2.3"
+GH_REPO = "pilahito/pantalla-turing-es"
+GH_BRANCH = "main"
 BG, SIDE, CARD, FG, MUTED = "#161b22", "#12161c", "#1e2630", "#e6edf3", "#8b9bab"
 CYAN, AMBER, LINE, GREEN, RED = "#3dccc7", "#e0a050", "#2a3542", "#3dd68c", "#f07178"
 SKINS = {
@@ -158,6 +160,110 @@ def monitor_running():
     except Exception:
         return False, []
 
+
+
+
+def _git(*args, timeout=60):
+    try:
+        r = subprocess.run(
+            ["git", *args],
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+        out = (r.stdout or "").strip()
+        err = (r.stderr or "").strip()
+        return r.returncode, out, err
+    except Exception as e:
+        return 1, "", str(e)
+
+
+def local_commit():
+    code, out, _ = _git("rev-parse", "HEAD")
+    return out if code == 0 and out else ""
+
+
+def remote_commit_api(branch=None):
+    branch = branch or GH_BRANCH
+    url = f"https://api.github.com/repos/{GH_REPO}/commits/{branch}"
+    req = urllib.request.Request(
+        url,
+        headers={"Accept": "application/vnd.github+json", "User-Agent": "CentroTuring"},
+    )
+    with urllib.request.urlopen(req, timeout=20) as r:
+        data = json.loads(r.read().decode("utf-8", errors="replace"))
+    sha = data.get("sha") or ""
+    msg = ((data.get("commit") or {}).get("message") or "").splitlines()[0][:120]
+    date = ((data.get("commit") or {}).get("committer") or {}).get("date") or ""
+    return sha, msg, date
+
+
+def check_for_updates():
+    """Return dict: ok, local, remote, behind, ahead, message, error."""
+    local = local_commit()
+    try:
+        remote, msg, date = remote_commit_api()
+    except Exception as e:
+        return {"ok": False, "error": str(e)[:200], "local": local}
+    if not local:
+        return {
+            "ok": True,
+            "local": "",
+            "remote": remote,
+            "behind": True,
+            "ahead": False,
+            "message": msg,
+            "date": date,
+            "note": "sin git local",
+        }
+    if local.startswith(remote[:7]) or remote.startswith(local[:7]) or local == remote:
+        return {
+            "ok": True,
+            "local": local,
+            "remote": remote,
+            "behind": False,
+            "ahead": False,
+            "message": msg,
+            "date": date,
+        }
+    # try git fetch + rev-list for accurate behind/ahead
+    _git("fetch", "pilahito", GH_BRANCH, timeout=90)
+    code_b, behind_n, _ = _git("rev-list", "--count", f"HEAD..pilahito/{GH_BRANCH}")
+    code_a, ahead_n, _ = _git("rev-list", "--count", f"pilahito/{GH_BRANCH}..HEAD")
+    behind = code_b == 0 and behind_n.isdigit() and int(behind_n) > 0
+    ahead = code_a == 0 and ahead_n.isdigit() and int(ahead_n) > 0
+    if code_b != 0:
+        # fallback: different SHAs => assume update available
+        behind = local != remote
+    return {
+        "ok": True,
+        "local": local,
+        "remote": remote,
+        "behind": behind,
+        "ahead": ahead,
+        "behind_n": behind_n if code_b == 0 else "?",
+        "ahead_n": ahead_n if code_a == 0 else "?",
+        "message": msg,
+        "date": date,
+    }
+
+
+def apply_update():
+    """Fetch + ff-only merge from pilahito/main. Returns (ok, detail)."""
+    code, out, err = _git("fetch", "pilahito", GH_BRANCH, timeout=120)
+    if code != 0:
+        return False, err or out or "git fetch fallo"
+    # stash only config.yaml if modified (keep user settings)
+    _git("stash", "push", "-m", "centro-update-auto", "--", "config.yaml")
+    code, out, err = _git("merge", "--ff-only", f"pilahito/{GH_BRANCH}", timeout=120)
+    if code != 0:
+        # try merge with no ff if needed but safer to report
+        detail = (err or out or "merge fallo")[:400]
+        _git("stash", "pop")
+        return False, detail
+    _git("stash", "pop")
+    return True, out or "ok"
 
 
 class App(tk.Tk):
@@ -330,6 +436,78 @@ class App(tk.Tk):
                  bg=self.bg, fg=self.muted, font=("Segoe UI", 9)).pack(anchor="w", padx=24, pady=(4, 0))
         self.foot.set(self.tr("Modelo: ", "Model: ") + self.ui.get("model", "3.5 landscape")
                       + "  |  " + (self.tr("Pantalla ON", "Screen ON") if on else self.tr("Pantalla OFF", "Screen OFF")))
+
+        tk.Label(self.main, text=self.tr("Actualizaciones", "Updates"), bg=self.bg, fg=CYAN,
+                 font=("Segoe UI", 10, "bold")).pack(anchor="w", padx=24, pady=(16, 4))
+        self.hint(self.tr(
+            f"Version Centro {VERSION} · repo GitHub {GH_REPO}",
+            f"Centro version {VERSION} · GitHub repo {GH_REPO}",
+        ))
+        upd = tk.Frame(self.main, bg=self.bg)
+        upd.pack(anchor="w", padx=24, pady=6)
+
+        def do_check():
+            self.foot.set(self.tr("Buscando actualizaciones…", "Checking for updates…"))
+            self.update_idletasks()
+            info = check_for_updates()
+            if not info.get("ok"):
+                messagebox.showerror(
+                    "Centro Turing",
+                    self.tr("No pude consultar GitHub: ", "Could not query GitHub: ")
+                    + str(info.get("error") or ""),
+                )
+                return
+            local = (info.get("local") or "?")[:7]
+            remote = (info.get("remote") or "?")[:7]
+            if info.get("behind"):
+                msg = self.tr(
+                    f"Hay actualizacion.\nLocal: {local}\nRemoto: {remote}\n{info.get('message') or ''}\n\n¿Actualizar ahora? (git pull ff-only)",
+                    f"Update available.\nLocal: {local}\nRemote: {remote}\n{info.get('message') or ''}\n\nUpdate now? (git pull ff-only)",
+                )
+                if messagebox.askyesno("Centro Turing", msg):
+                    ok, detail = apply_update()
+                    if ok:
+                        messagebox.showinfo(
+                            "Centro Turing",
+                            self.tr(
+                                "Actualizado. Reinicia el Centro (cierra y abre Centro-Turing.bat).",
+                                "Updated. Restart Centro (close and reopen Centro-Turing.bat).",
+                            ),
+                        )
+                        self.foot.set(self.tr("Actualizado.", "Updated."))
+                    else:
+                        messagebox.showerror(
+                            "Centro Turing",
+                            self.tr(
+                                "No se pudo fusionar (cambios locales o conflicto).\n",
+                                "Could not merge (local changes or conflict).\n",
+                            )
+                            + str(detail)[:300],
+                        )
+            else:
+                extra = ""
+                if info.get("ahead"):
+                    extra = self.tr(" (tu rama va por delante)", " (your branch is ahead)")
+                messagebox.showinfo(
+                    "Centro Turing",
+                    self.tr(
+                        f"Ya estas al dia.{extra}\nLocal {local} = remoto {remote}",
+                        f"You are up to date.{extra}\nLocal {local} = remote {remote}",
+                    ),
+                )
+                self.foot.set(self.tr("Al dia.", "Up to date."))
+
+        tk.Button(
+            upd,
+            text=self.tr("Buscar actualizaciones", "Check for updates"),
+            command=do_check,
+            bg=CYAN,
+            fg="#071014",
+            relief="flat",
+            font=("Segoe UI", 11, "bold"),
+            padx=16,
+            pady=10,
+        ).pack(side="left", padx=4)
 
     def page_tema(self, cfg):
         self.h1(self.tr("Tema", "Theme"))
@@ -517,6 +695,43 @@ class App(tk.Tk):
         extra.pack(anchor="w", padx=24)
         tk.Button(extra, text=self.tr("Autostart (ver Panel)", "Autostart (see Panel)"), command=_boot_legacy,
                   bg=self.card, fg=self.fg, relief="flat", padx=10, pady=6).pack(side="left", padx=4)
+
+        def do_check_aj():
+            self.foot.set(self.tr("Buscando actualizaciones…", "Checking for updates…"))
+            self.update_idletasks()
+            info = check_for_updates()
+            if not info.get("ok"):
+                messagebox.showerror("Centro Turing", str(info.get("error") or "error"))
+                return
+            local = (info.get("local") or "?")[:7]
+            remote = (info.get("remote") or "?")[:7]
+            if info.get("behind"):
+                if messagebox.askyesno(
+                    "Centro Turing",
+                    self.tr(
+                        f"Hay actualizacion {remote}. ¿Aplicar ahora?",
+                        f"Update {remote} available. Apply now?",
+                    ),
+                ):
+                    ok, detail = apply_update()
+                    messagebox.showinfo("Centro Turing", "OK" if ok else detail[:300])
+            else:
+                messagebox.showinfo(
+                    "Centro Turing",
+                    self.tr(f"Al dia ({local}).", f"Up to date ({local})."),
+                )
+
+        tk.Button(
+            extra,
+            text=self.tr("Buscar actualizaciones", "Check for updates"),
+            command=do_check_aj,
+            bg=CYAN,
+            fg="#071014",
+            relief="flat",
+            padx=10,
+            pady=6,
+        ).pack(side="left", padx=4)
+
         tk.Label(self.main, text=self.tr("Avanzado. YAML del tema actual. No toca el codigo del programa.",
                                          "Advanced. YAML of the current theme. Does not touch program code."),
                  bg=self.bg, fg=self.muted).pack(anchor="w", padx=24, pady=(10, 0))

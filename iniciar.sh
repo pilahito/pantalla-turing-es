@@ -6,6 +6,11 @@ cd "$ROOT"
 
 THEME="${1:-}"
 
+if [[ "${1:-}" == "--autostart" ]]; then
+  bash "$ROOT/tools/instalar-autostart.sh"
+  exit 0
+fi
+
 if [[ "${1:-}" == "--install" ]]; then
   echo "Instalando dependencias..."
   if command -v apt-get >/dev/null 2>&1; then

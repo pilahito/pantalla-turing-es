@@ -40,7 +40,7 @@ STATS:
         SHOW: true
         SHOW_UNIT: true
         X: 150
-        Y: 61
+        Y: 64
         FONT: roboto/Roboto-Bold.ttf
         FONT_SIZE: 13
         FONT_COLOR: 200, 200, 200
@@ -108,7 +108,7 @@ STATS:
         SHOW: true
         SHOW_UNIT: true
         X: 172
-        Y: 157
+        Y: 159
         FONT: roboto/Roboto-Bold.ttf
         FONT_SIZE: 13
         FONT_COLOR: 200, 200, 200

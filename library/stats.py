@@ -765,7 +765,26 @@ class Date:
         if not lc_time:
             lc_time = "en_US"
 
+        # Prefer Spanish locale when UI/weather language is es
+        try:
+            lang = str(config.CONFIG_DATA.get("config", {}).get("WEATHER_LANGUAGE", "")).lower()
+            if lang.startswith("es"):
+                lc_time = "es_ES"
+        except Exception:
+            pass
+
         date_theme_data = config.THEME_DATA['STATS']['DATE']
+
+        # Optional weekday (lunes, martes, ...)
+        weekday_wrap = date_theme_data.get('WEEKDAY') or {}
+        weekday_theme_data = weekday_wrap.get('TEXT') if isinstance(weekday_wrap, dict) else None
+        if weekday_theme_data and weekday_theme_data.get('SHOW', False):
+            wd_format = weekday_theme_data.get("FORMAT", 'EEEE')
+            display_themed_value(
+                theme_data=weekday_theme_data,
+                value=f"{babel.dates.format_date(date_now, format=wd_format, locale=lc_time)}"
+            )
+
         day_theme_data = date_theme_data['DAY']['TEXT']
         date_format = day_theme_data.get("FORMAT", 'medium')
         display_themed_value(
@@ -774,10 +793,22 @@ class Date:
         )
 
         hour_theme_data = date_theme_data['HOUR']['TEXT']
-        time_format = hour_theme_data.get("FORMAT", 'medium')
+        # CLOCK_FORMAT in config.yaml: 12 or 24 (default 24)
+        clock_fmt = str(config.CONFIG_DATA.get("config", {}).get("CLOCK_FORMAT", "24")).strip().lower()
+        if clock_fmt in ("12", "12h", "12hr"):
+            time_format = hour_theme_data.get("FORMAT_12", hour_theme_data.get("FORMAT", 'h:mm a'))
+            # If theme still has 24h pattern, force 12h
+            if "H" in str(time_format) and "a" not in str(time_format):
+                time_format = 'h:mm a'
+        else:
+            time_format = hour_theme_data.get("FORMAT_24", hour_theme_data.get("FORMAT", 'HH:mm'))
+            if time_format in ('medium', 'short', 'full', 'long'):
+                pass  # babel named styles OK
+            elif "a" in str(time_format) and "H" not in str(time_format):
+                time_format = 'HH:mm'
         display_themed_value(
             theme_data=hour_theme_data,
-            value=f"{babel.dates.format_time(date_now, format=time_format, locale=lc_time)}"
+            value=(str(babel.dates.format_time(date_now, format=time_format, locale=lc_time)).replace(chr(0x202f), " ").replace(chr(0xa0), " "))
         )
 
 

@@ -50,7 +50,7 @@ STATS:
         SHOW: True
         SHOW_UNIT: True
         X: 34
-        Y: 135
+        Y: 134
         FONT: roboto/Roboto-Bold.ttf
         FONT_SIZE: 23
         FONT_COLOR: 248, 177, 51

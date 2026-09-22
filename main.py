@@ -29,6 +29,12 @@
 from library.pythoncheck import check_python_version
 check_python_version()
 
+# Windows: si el monitor va sin consola (lo lanza el panel en segundo plano), cada
+# subproceso de sensores (nvidia-smi via GPUtil, ffmpeg...) provoca que Windows le
+# cree una consola nueva: una ventana negra en cada refresco de sensores.
+from library.no_console_windows import apply as _no_console_windows
+_no_console_windows()
+
 import os
 import sys
 
@@ -220,10 +226,14 @@ if __name__ == "__main__":
     # Create a tray icon for the program (ES/EN labels + Abrir)
     try:
         _tl = _tray_labels()
+        # Icono de bandeja: el nuevo de Centro Turing; si no estuviera, el antiguo
+        icono = MAIN_DIRECTORY / "res/icons/centro-turing/64.png"
+        if not icono.exists():
+            icono = MAIN_DIRECTORY / "res/icons/monitor-icon-17865/64.png"
         tray_icon = pystray.Icon(
             name='Turing System Monitor',
             title=_tl["title"],
-            icon=Image.open(MAIN_DIRECTORY / "res/icons/monitor-icon-17865/64.png"),
+            icon=Image.open(icono),
             menu=pystray.Menu(
                 pystray.MenuItem(
                     text=_tl["open"],

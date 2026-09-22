@@ -11,6 +11,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace PantallaTuring
 {
@@ -31,18 +32,52 @@ namespace PantallaTuring
                 return;
             }
 
-            if (args != null && args.Length > 0)
+            bool auto = false;
+            string themeArg = null;
+            if (args != null)
             {
-                string theme = args[0].Trim().Trim('"');
-                bool wantAdmin = theme.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0
-                    || string.Equals(theme, "AdminES", StringComparison.OrdinalIgnoreCase);
+                for (int i = 0; i < args.Length; i++)
+                {
+                    string a = (args[i] ?? "").Trim().Trim('"');
+                    if (string.Equals(a, "--auto", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(a, "/auto", StringComparison.OrdinalIgnoreCase))
+                        auto = true;
+                    else if (string.Equals(a, "--install-autostart", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(a, "--enable-autostart", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!Project.IsAdmin())
+                        {
+                            Project.RelaunchElevated("", true);
+                            return;
+                        }
+                        Project.SetAutoStart(true);
+                        if (string.Equals(a, "--install-autostart", StringComparison.OrdinalIgnoreCase))
+                            return;
+                    }
+                    else if (!string.IsNullOrEmpty(a))
+                        themeArg = a;
+                }
+            }
+
+            if (auto)
+            {
+                string err;
+                if (!Project.LaunchMonitor(root, "", out err))
+                    MessageBox.Show(err, "Pantalla Turing", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(themeArg))
+            {
+                bool wantAdmin = themeArg.IndexOf("Admin", StringComparison.OrdinalIgnoreCase) >= 0
+                    || string.Equals(themeArg, "AdminES", StringComparison.OrdinalIgnoreCase);
                 if (wantAdmin && !Project.IsAdmin())
                 {
-                    Project.RelaunchElevated(theme);
+                    Project.RelaunchElevated(themeArg);
                     return;
                 }
                 string err;
-                if (!Project.LaunchMonitor(root, theme, out err))
+                if (!Project.LaunchMonitor(root, themeArg, out err))
                     MessageBox.Show(err, "Pantalla Turing", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
@@ -111,6 +146,7 @@ namespace PantallaTuring
                 {"pick_theme", "Selecciona un tema.", "Select a theme."},
                 {"no_preview", "(sin preview.png)", "(no preview.png)"},
                 {"filter_note", "Filtrado: DISPLAY_SIZE 3.5\" · landscape · 480×320", "Filter: DISPLAY_SIZE 3.5\" · landscape · 480×320"},
+                {"clock_fmt", "Formato hora", "Clock format"},
                 {"search", "Buscar tema...", "Search theme..."},
                 {"themes_count", "temas", "themes"},
                 {"grp_port", "Puerto", "Port"},
@@ -121,6 +157,7 @@ namespace PantallaTuring
                 {"lang_es_sub", "Interfaz y textos en espanol", "UI and labels in Spanish"},
                 {"lang_en_sub", "UI and labels in English", "UI and labels in English"},
                 {"dblclick_hint", "Doble clic = aplicar e iniciar", "Double-click = apply & start"},
+                {"autostart", "Arrancar con Windows", "Start with Windows"},
                 {"grp_weather", "Clima", "Weather"},
                 {"detect_loc", "Detectar mi ubicacion", "Detect my location"},
                 {"auto_weather", "Usar clima automatico (sin API / Open-Meteo)", "Use automatic weather (no API / Open-Meteo)"},
@@ -194,13 +231,85 @@ namespace PantallaTuring
 
         public static void RelaunchElevated(string theme)
         {
+            RelaunchElevated(theme, false);
+        }
+
+        public static void RelaunchElevated(string theme, bool enableAuto)
+        {
             ProcessStartInfo uac = new ProcessStartInfo();
             uac.FileName = Process.GetCurrentProcess().MainModule.FileName;
             uac.Verb = "runas";
             uac.UseShellExecute = true;
+            string args = "";
             if (!string.IsNullOrEmpty(theme))
-                uac.Arguments = "\"" + theme.Replace("\"", "") + "\"";
+                args = "\"" + theme.Replace("\"", "") + "\"";
+            if (enableAuto)
+                args = (args + " --enable-autostart").Trim();
+            if (!string.IsNullOrEmpty(args))
+                uac.Arguments = args;
             try { Process.Start(uac); } catch { }
+        }
+
+        public static bool IsAutoStartEnabled()
+        {
+            try
+            {
+                ProcessStartInfo q = new ProcessStartInfo("schtasks.exe", "/Query /TN \"PantallaTuring\"");
+                q.CreateNoWindow = true;
+                q.UseShellExecute = false;
+                q.RedirectStandardOutput = true;
+                q.RedirectStandardError = true;
+                Process p = Process.Start(q);
+                if (p == null) return false;
+                p.WaitForExit(4000);
+                return p.ExitCode == 0;
+            }
+            catch { return false; }
+        }
+
+        private static void ClearRunKey()
+        {
+            try
+            {
+                using (RegistryKey k = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true))
+                {
+                    if (k != null) k.DeleteValue("PantallaTuring", false);
+                }
+            }
+            catch { }
+        }
+
+        private static void RunSchtasks(string args)
+        {
+            ProcessStartInfo q = new ProcessStartInfo("schtasks.exe", args);
+            q.CreateNoWindow = true;
+            q.UseShellExecute = false;
+            q.RedirectStandardOutput = true;
+            q.RedirectStandardError = true;
+            Process p = Process.Start(q);
+            if (p != null) p.WaitForExit(8000);
+        }
+
+        public static void SetAutoStart(bool on)
+        {
+            ClearRunKey();
+            string exeOn = Process.GetCurrentProcess().MainModule.FileName;
+            if (!on)
+            {
+                RunSchtasks("/Delete /TN \"PantallaTuring\" /F");
+                return;
+            }
+            try
+            {
+                using (RegistryKey k = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run"))
+                {
+                    if (k != null) k.SetValue("PantallaTuring", "\"" + exeOn + "\" --auto");
+                }
+            }
+            catch { }
+            if (!IsAdmin()) return;
+            string tr = "\\\"" + exeOn + "\\\" --auto";
+            RunSchtasks("/Create /F /TN \"PantallaTuring\" /SC ONLOGON /RL HIGHEST /TR \"" + tr + "\"");
         }
 
         public static bool LaunchMonitor(string root, string theme, out string error)
@@ -311,7 +420,7 @@ namespace PantallaTuring
             {
                 string line = lines[i];
                 Match m = Regex.Match(line,
-                    @"^\s*(THEME|COM_PORT|DISPLAY_REVERSE|BRIGHTNESS|HW_SENSORS|CPU_FAN|WEATHER_API_KEY|WEATHER_LATITUDE|WEATHER_LONGITUDE|WEATHER_LANGUAGE)\s*:\s*(.+?)\s*$");
+                    @"^\s*(THEME|COM_PORT|DISPLAY_REVERSE|BRIGHTNESS|HW_SENSORS|CPU_FAN|WEATHER_API_KEY|WEATHER_LATITUDE|WEATHER_LONGITUDE|WEATHER_LANGUAGE|CLOCK_FORMAT)\s*:\s*(.+?)\s*$");
                 if (m.Success)
                     d[m.Groups[1].Value] = m.Groups[2].Value.Trim().Trim('"', '\'');
             }
@@ -795,6 +904,7 @@ namespace PantallaTuring
         private TrackBar _brightness;
         private Label _brightVal;
         private CheckBox _reverse;
+        private CheckBox _autoStart;
         private ComboBox _hw, _fan;
         private Panel _advPanel;
         private CheckBox _advToggle;
@@ -1093,6 +1203,7 @@ namespace PantallaTuring
             _brightVal.Text = "0%";
             _grpDisplay.Controls.Add(_brightVal);
 
+            _grpDisplay.Size = new Size(430, 156);
             _reverse = new CheckBox();
             _reverse.Location = new Point(12, 96);
             _reverse.AutoSize = true;
@@ -1100,6 +1211,35 @@ namespace PantallaTuring
             _reverse.FlatStyle = FlatStyle.Flat;
             _reverse.FlatAppearance.BorderColor = UiColors.CyanDim;
             _grpDisplay.Controls.Add(_reverse);
+
+            _autoStart = new CheckBox();
+            _autoStart.Location = new Point(12, 120);
+            _autoStart.AutoSize = true;
+            _autoStart.ForeColor = UiColors.Text;
+            _autoStart.FlatStyle = FlatStyle.Flat;
+            _autoStart.FlatAppearance.BorderColor = UiColors.CyanDim;
+            _autoStart.Checked = Project.IsAutoStartEnabled();
+            _autoStart.CheckedChanged += delegate
+            {
+                if (_autoStart.Checked)
+                {
+                    if (!Project.IsAdmin())
+                    {
+                        Project.RelaunchElevated("", true);
+                        _autoStart.Checked = false;
+                        SetStatus(I18n.Lang == "en" ? "Accept UAC to enable admin startup." : "Acepta UAC para activar el arranque admin.");
+                        return;
+                    }
+                    Project.SetAutoStart(true);
+                    SetStatus(I18n.Lang == "en" ? "Will start as admin with Windows." : "Arrancara como admin con Windows.");
+                }
+                else
+                {
+                    Project.SetAutoStart(false);
+                    SetStatus(I18n.Lang == "en" ? "Admin startup off." : "Arranque admin desactivado.");
+                }
+            };
+            _grpDisplay.Controls.Add(_autoStart);
 
             _grpSensors = new HudGroupPanel();
             _grpSensors.Location = new Point(12, 116);
@@ -1380,6 +1520,7 @@ namespace PantallaTuring
             _lblCom.Text = I18n.T("com");
             _lblBright.Text = I18n.T("brightness");
             _reverse.Text = I18n.T("reverse");
+            if (_autoStart != null) _autoStart.Text = I18n.T("autostart");
             _lblHw.Text = I18n.T("hw");
             _lblFan.Text = I18n.T("fan");
             _advToggle.Text = I18n.T("advanced");
@@ -1635,7 +1776,7 @@ namespace PantallaTuring
             SaveAll(false);
             if (asAdmin && !Project.IsAdmin())
             {
-                Project.RelaunchElevated(theme);
+                Project.RelaunchElevated(theme, true);
                 SetStatus(I18n.T("status_uac"));
                 return;
             }
@@ -1643,7 +1784,20 @@ namespace PantallaTuring
             if (!Project.LaunchMonitor(_root, theme, out err))
                 MessageBox.Show(err, "Pantalla Turing", MessageBoxButtons.OK, MessageBoxIcon.Error);
             else
-                SetStatus(I18n.T("status_started") + (asAdmin ? " (admin)" : "") + ": " + theme);
+            {
+                if (asAdmin)
+                {
+                    Project.SetAutoStart(true);
+                    if (_autoStart != null) _autoStart.Checked = true;
+                    SetStatus(I18n.T("status_started") + " (admin): " + theme);
+                }
+                else
+                {
+                    Project.SetAutoStart(true);
+                    if (_autoStart != null) _autoStart.Checked = true;
+                    SetStatus(I18n.T("status_started") + ": " + theme);
+                }
+            }
             UpdateSummary();
         }
 

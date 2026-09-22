@@ -1,0 +1,3 @@
+﻿// LEGACY CLI bridge — preferir PantallaTuringUI.cs / PantallaTuring.exe
+// Conservado para recompilar Turing-*.exe antiguos si hace falta.
+// Fuente de verdad del lanzador moderno: tools/PantallaTuringUI.cs

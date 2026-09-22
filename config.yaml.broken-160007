@@ -1,0 +1,20 @@
+config:
+  COM_PORT: COM3
+  THEME: AtardecerES
+  HW_SENSORS: AUTO
+  ETH: Ethernet
+  WLO: ''
+  CPU_FAN: AUTO
+  PING: 8.8.8.8
+  WEATHER_API_KEY: 
+  
+  
+  
+  
+
+YOUR_OPENWEATHERMAP_API_KEY
+  REVISION: A
+  BRIGHTNESS: 50
+  DISPLAY_REVERSE: false
+  RESET_ON_STARTUP: false
+

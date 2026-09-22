@@ -211,7 +211,7 @@ STATS:
         SHOW: True
         SHOW_UNIT: False
         X: 168
-        Y: 10
+        Y: 15
         WIDTH: 58
         HEIGHT: 20
         FONT: roboto-mono/RobotoMono-Bold.ttf
